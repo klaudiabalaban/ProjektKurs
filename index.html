@@ -1296,29 +1296,4 @@ resizeGameCanvas();
 </script>
 </body>
 </html>
-const musicLibrary = {
-  "believer": "music/believer.mp3",
-  "faded": "music/faded.mp3",
-  "thunder": "music/thunder.mp3"
-};
 
-function downloadSong(title) {
-  const key = title.toLowerCase();
-
-  if (musicLibrary[key]) {
-    const newSong = {
-      id: Date.now(),
-      title,
-      artist: "Imported",
-      audio: musicLibrary[key],
-      bpm: 128,
-      diff: "Normal",
-      diffClass: "diff-normal",
-      emoji: "🎵",
-      color: "#a855f7"
-    };
-
-    downloadedSongs.push(newSong);
-    renderSongs(downloadedSongs);
-  }
-}
