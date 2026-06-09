@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>RhythmClick!</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700;900&family=Rajdhani:wght@400;600;700&display=swap');
+
+  :root {
+    --pink: #FF4FA3;
+    --purple: #A855F7;
+    --cyan: #22D3EE;
+    --dark: #0A0010;
+    --dark2: #110020;
+    --dark3: #1A0035;
+    --text: #F0E6FF;
+    --hit300: #4AF7FF;
+    --hit100: #A0FF80;
+    --hit50: #FFDD55;
+    --miss: #FF4444;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--dark);
+    font-family: 'Exo 2', sans-serif;
+    color: var(--text);
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+  }
+
+  /* ===== PARTICLES BG ===== */
+  #bg-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* ===== SCREENS ===== */
+  .screen {
+    position: absolute;
+    width: 100%; height: 100%;
+    top: 0; left: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.5s ease;
+  }
+  .screen.hidden { opacity: 0; pointer-events: none; }
+
+  /* ===== MENU SCREEN ===== */
+  #screen-menu {
+    background: radial-gradient(ellipse at center, #1a0035 0%, #0A0010 70%);
+  }
+
+  .logo-wrap {
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    animation: float 3s ease-in-out infinite;
+    user-select: none;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-14px); }
+  }
+
+  .logo-circle {
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #ff9fe6, #a855f7 45%, #22d3ee 100%);
+    box-shadow:
+      0 0 40px rgba(168,85,247,0.6),
+      0 0 80px rgba(255,79,163,0.3),
+      inset 0 0 30px rgba(255,255,255,0.1);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .logo-circle:hover, .logo-circle:active {
+    transform: scale(1.08);
+    box-shadow:
+      0 0 60px rgba(168,85,247,0.9),
+      0 0 120px rgba(255,79,163,0.5),
+      inset 0 0 40px rgba(255,255,255,0.15);
+  }
+
+  .logo-inner {
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 40%, #ff4fa3, #7c3aed);
+    border: 3px solid rgba(255,255,255,0.3);
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .logo-text-big {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 38px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 2px;
+    text-shadow: 0 0 20px rgba(255,255,255,0.8);
+  }
+
+  .logo-sub {
+    font-size: 13px;
+    font-weight: 300;
+    color: rgba(240,230,255,0.6);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+  }
+
+  .logo-hint {
+    font-size: 12px;
+    color: rgba(168,85,247,0.8);
+    letter-spacing: 2px;
+    animation: pulse-text 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse-text {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  /* ===== SONG SELECT SCREEN ===== */
+  #screen-songs {
+    background: linear-gradient(160deg, #0e001f 0%, #0a0010 100%);
+    flex-direction: column;
+    padding: 20px;
+    overflow: hidden;
+  }
+
+  .screen-header {
+    width: 100%;
+    max-width: 800px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    flex-shrink: 0;
+  }
+
+  .back-btn {
+    background: rgba(168,85,247,0.15);
+    border: 1px solid rgba(168,85,247,0.3);
+    color: var(--purple);
+    padding: 8px 18px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: 'Exo 2', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .back-btn:hover { background: rgba(168,85,247,0.3); }
+
+  .screen-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--pink);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .search-bar {
+    width: 100%;
+    max-width: 800px;
+    position: relative;
+    margin-bottom: 16px;
+    flex-shrink: 0;
+  }
+
+  .search-bar input {
+    width: 100%;
+    padding: 12px 48px 12px 18px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(168,85,247,0.3);
+    border-radius: 30px;
+    color: var(--text);
+    font-family: 'Exo 2', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .search-bar input:focus {
+    border-color: var(--purple);
+    box-shadow: 0 0 15px rgba(168,85,247,0.2);
+  }
+  .search-bar input::placeholder { color: rgba(240,230,255,0.3); }
+
+  .search-icon {
+    position: absolute;
+    right: 16px; top: 50%;
+    transform: translateY(-50%);
+    color: rgba(168,85,247,0.6);
+    font-size: 16px;
+    pointer-events: none;
+  }
+
+  .search-results-info {
+    font-size: 11px;
+    color: rgba(240,230,255,0.4);
+    text-align: center;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+    height: 16px;
+  }
+
+  .songs-list {
+    width: 100%;
+    max-width: 800px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-right: 4px;
+    padding-bottom: 20px;
+  }
+
+  .songs-list::-webkit-scrollbar { width: 3px; }
+  .songs-list::-webkit-scrollbar-track { background: transparent; }
+  .songs-list::-webkit-scrollbar-thumb { background: rgba(168,85,247,0.4); border-radius: 2px; }
+
+  .song-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .song-card:hover, .song-card:active {
+    background: rgba(168,85,247,0.12);
+    border-color: rgba(168,85,247,0.4);
+    transform: translateX(4px);
+  }
+
+  .song-card.external {
+    border-style: dashed;
+    border-color: rgba(34,211,238,0.3);
+  }
+  .song-card.external:hover {
+    background: rgba(34,211,238,0.08);
+    border-color: rgba(34,211,238,0.5);
+  }
+
+  .song-cover {
+    width: 52px; height: 52px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  }
+
+  .song-info { flex: 1; min-width: 0; }
+
+  .song-title {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .song-artist {
+    font-size: 12px;
+    color: rgba(240,230,255,0.5);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .song-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .song-diff {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    letter-spacing: 1px;
+  }
+  .diff-easy { background: rgba(74,247,255,0.15); color: var(--hit300); }
+  .diff-normal { background: rgba(160,255,128,0.15); color: var(--hit100); }
+  .diff-hard { background: rgba(255,79,163,0.15); color: var(--pink); }
+  .diff-insane { background: rgba(168,85,247,0.2); color: var(--purple); }
+
+  .song-bpm {
+    font-size: 11px;
+    color: rgba(240,230,255,0.35);
+  }
+
+  .download-badge {
+    font-size: 11px;
+    color: var(--cyan);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* ===== GAME SCREEN ===== */
+  #screen-game {
+    background: #05000e;
+    padding: 0;
+  }
+
+  #game-canvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    touch-action: none;
+    z-index: 5;
+  }
+
+  .game-hud {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    z-index: 20;
+    padding: 12px 18px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    pointer-events: none;
+  }
+
+  .hud-score {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 0 15px rgba(255,79,163,0.6);
+    letter-spacing: 2px;
+  }
+
+  .hud-combo {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 42px;
+    font-weight: 900;
+    color: var(--pink);
+    text-shadow: 0 0 20px rgba(255,79,163,0.8);
+    text-align: center;
+    line-height: 1;
+    transition: transform 0.1s ease;
+  }
+  .hud-combo.pop { animation: combo-pop 0.15s ease; }
+  @keyframes combo-pop {
+    0% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+  }
+
+  .hud-combo-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,79,163,0.6);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  .hud-acc {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: rgba(240,230,255,0.7);
+    text-align: right;
+  }
+
+  .progress-bar-wrap {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 4px;
+    background: rgba(255,255,255,0.08);
+    z-index: 20;
+  }
+
+  #progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--purple), var(--pink));
+    width: 0%;
+    transition: width 0.1s linear;
+    box-shadow: 0 0 8px rgba(255,79,163,0.6);
+  }
+
+  .hit-feedback {
+    position: absolute;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 28px;
+    font-weight: 900;
+    pointer-events: none;
+    z-index: 30;
+    animation: hit-float 0.7s ease forwards;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  }
+  @keyframes hit-float {
+    0% { transform: translateY(0) scale(1.2); opacity: 1; }
+    100% { transform: translateY(-50px) scale(0.8); opacity: 0; }
+  }
+
+  /* ===== RESULT SCREEN ===== */
+  #screen-result {
+    background: radial-gradient(ellipse at center, #1a0035 0%, #0A0010 70%);
+    flex-direction: column;
+    gap: 16px;
+    padding: 30px;
+  }
+
+  .result-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 30px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--pink);
+    text-shadow: 0 0 20px rgba(255,79,163,0.5);
+  }
+
+  .result-grade {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 100px;
+    font-weight: 900;
+    line-height: 1;
+    text-shadow: 0 0 40px currentColor;
+    animation: grade-in 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  @keyframes grade-in {
+    from { transform: scale(0.3) rotate(-20deg); opacity: 0; }
+    to { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+
+  .result-stats {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 24px 32px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 32px;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .stat-item { text-align: center; }
+  .stat-val {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(240,230,255,0.4);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .result-btns {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--purple), var(--pink));
+    border: none;
+    color: white;
+    padding: 13px 28px;
+    border-radius: 30px;
+    font-family: 'Exo 2', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 20px rgba(168,85,247,0.4);
+  }
+  .btn-primary:hover, .btn-primary:active {
+    transform: scale(1.05);
+    box-shadow: 0 6px 28px rgba(168,85,247,0.6);
+  }
+
+  .btn-secondary {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--text);
+    padding: 13px 28px;
+    border-radius: 30px;
+    font-family: 'Exo 2', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-secondary:hover, .btn-secondary:active {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.25);
+  }
+
+  /* ===== COUNTDOWN ===== */
+  #countdown-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(5,0,14,0.85);
+    z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+  }
+  #countdown-overlay.hidden { display: none; }
+
+  .countdown-num {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 100px;
+    font-weight: 900;
+    color: white;
+    text-shadow: 0 0 40px rgba(168,85,247,0.8);
+    animation: countdown-pop 0.9s ease;
+  }
+  @keyframes countdown-pop {
+    0% { transform: scale(2); opacity: 0; }
+    30% { transform: scale(0.9); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .countdown-song {
+    font-size: 16px;
+    font-weight: 300;
+    color: rgba(240,230,255,0.6);
+    letter-spacing: 2px;
+  }
+
+  /* ===== APPROACH RING ===== */
+  .approach-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.7);
+    pointer-events: none;
+    z-index: 8;
+  }
+
+  /* ===== TOAST NOTIF ===== */
+  #toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(168,85,247,0.9);
+    color: white;
+    padding: 10px 24px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.3s;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  #toast.show { opacity: 1; }
+
+  /* ===== MOBILE adjustments ===== */
+  @media (max-width: 480px) {
+    .logo-circle { width: 130px; height: 130px; }
+    .logo-inner { width: 98px; height: 98px; }
+    .logo-text-big { font-size: 30px; }
+    .hud-score { font-size: 22px; }
+    .hud-combo { font-size: 32px; }
+    .result-stats { padding: 18px 20px; gap: 12px 20px; }
+    .stat-val { font-size: 22px; }
+    .result-grade { font-size: 80px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<!-- MENU -->
+<div class="screen" id="screen-menu">
+  <div class="logo-wrap" id="logo-btn">
+    <div class="logo-circle" id="logo-circle">
+      <div class="logo-inner">
+        <span class="logo-text-big">RC!</span>
+      </div>
+    </div>
+    <div class="logo-sub">RhythmClick!</div>
+    <div class="logo-hint">✦ KLIKNIJ ABY GRAĆ ✦</div>
+  </div>
+</div>
+
+<!-- SONG SELECT -->
+<div class="screen hidden" id="screen-songs">
+  <div class="screen-header">
+    <button class="back-btn" id="btn-back-menu">← Wróć</button>
+    <div class="screen-title">Wybierz Utwór</div>
+    <div style="width:80px"></div>
+  </div>
+  <div class="search-bar">
+    <input type="text" id="search-input" placeholder="🔍  Szukaj lub wpisz tytuł do pobrania...">
+    <span class="search-icon">↵</span>
+  </div>
+  <div class="search-results-info" id="search-info"></div>
+  <div class="songs-list" id="songs-list"></div>
+</div>
+
+<!-- GAME SCREEN -->
+<div class="screen hidden" id="screen-game">
+  <div class="game-hud">
+    <div>
+      <div class="hud-score" id="hud-score">000000</div>
+    </div>
+    <div style="text-align:center">
+      <div class="hud-combo" id="hud-combo">0</div>
+      <div class="hud-combo-label">COMBO</div>
+    </div>
+    <div>
+      <div class="hud-acc" id="hud-acc">100.00%</div>
+    </div>
+  </div>
+  <canvas id="game-canvas"></canvas>
+  <div class="progress-bar-wrap"><div id="progress-bar"></div></div>
+  <div id="countdown-overlay">
+    <div class="countdown-num" id="countdown-num">3</div>
+    <div class="countdown-song" id="countdown-song"></div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div class="screen hidden" id="screen-result">
+  <div class="result-title" id="result-title">WYNIKI</div>
+  <div class="result-grade" id="result-grade">A</div>
+  <div class="result-stats">
+    <div class="stat-item"><div class="stat-val" id="res-score">0</div><div class="stat-label">Wynik</div></div>
+    <div class="stat-item"><div class="stat-val" id="res-acc">0%</div><div class="stat-label">Celność</div></div>
+    <div class="stat-item"><div class="stat-val" id="res-300">0</div><div class="stat-label">300s</div></div>
+    <div class="stat-item"><div class="stat-val" id="res-100">0</div><div class="stat-label">100s</div></div>
+    <div class="stat-item"><div class="stat-val" id="res-50">0</div><div class="stat-label">50s</div></div>
+    <div class="stat-item"><div class="stat-val" id="res-miss">0</div><div class="stat-label">Missy</div></div>
+    <div class="stat-item" style="grid-column:1/-1"><div class="stat-val" id="res-combo">0x</div><div class="stat-label">Max Combo</div></div>
+  </div>
+  <div class="result-btns">
+    <button class="btn-primary" id="btn-retry">↺ Spróbuj ponownie</button>
+    <button class="btn-secondary" id="btn-songs">♪ Lista piosenek</button>
+  </div>
+</div>
+
+<div id="toast">Pobrano utwór!</div>
+
+<script>
+// ============================================================
+// BACKGROUND PARTICLES
+// ============================================================
+(function() {
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, stars = [];
+
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+
+  function initStars() {
+    stars = [];
+    for (let i = 0; i < 120; i++) {
+      stars.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        r: Math.random() * 1.5 + 0.2,
+        a: Math.random(),
+        da: (Math.random() - 0.5) * 0.005,
+        dx: (Math.random() - 0.5) * 0.15,
+        dy: (Math.random() - 0.5) * 0.15,
+        color: Math.random() < 0.3 ? '#a855f7' : Math.random() < 0.5 ? '#ff4fa3' : '#ffffff'
+      });
+    }
+  }
+
+  function drawStars() {
+    ctx.clearRect(0, 0, W, H);
+    for (const s of stars) {
+      s.a += s.da;
+      if (s.a <= 0 || s.a >= 1) s.da *= -1;
+      s.x += s.dx; s.y += s.dy;
+      if (s.x < 0) s.x = W; if (s.x > W) s.x = 0;
+      if (s.y < 0) s.y = H; if (s.y > H) s.y = 0;
+      ctx.globalAlpha = s.a * 0.7;
+      ctx.fillStyle = s.color;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(drawStars);
+  }
+
+  window.addEventListener('resize', () => { resize(); initStars(); });
+  resize(); initStars(); drawStars();
+})();
+
+// ============================================================
+// SONGS DATA
+// ============================================================
+const SONGS = [
+  { id: 1, title: "Neon Hearts", artist: "ZARA NOVA", bpm: 128, diff: "Normal", diffClass: "diff-normal", emoji: "💜", color: "#a855f7" },
+  { id: 2, title: "Summer Crash", artist: "THE LUMINARY", bpm: 140, diff: "Hard", diffClass: "diff-hard", emoji: "🌊", color: "#22d3ee" },
+  { id: 3, title: "Glow Up", artist: "STELLARWAVE", bpm: 115, diff: "Easy", diffClass: "diff-easy", emoji: "✨", color: "#4af7ff" },
+  { id: 4, title: "Midnight Drive", artist: "KASSIA REY", bpm: 135, diff: "Hard", diffClass: "diff-hard", emoji: "🌙", color: "#ff4fa3" },
+  { id: 5, title: "Electric Feel '26", artist: "CHROMATIC", bpm: 150, diff: "Insane", diffClass: "diff-insane", emoji: "⚡", color: "#ffdd55" },
+  { id: 6, title: "Cloud Nine", artist: "PASTEL DREAM", bpm: 110, diff: "Easy", diffClass: "diff-easy", emoji: "☁️", color: "#a0ff80" },
+  { id: 7, title: "Retrograde Vibes", artist: "LUNA ECHO", bpm: 122, diff: "Normal", diffClass: "diff-normal", emoji: "🔮", color: "#a855f7" },
+  { id: 8, title: "Hypnotic", artist: "NOVAXIA", bpm: 145, diff: "Insane", diffClass: "diff-insane", emoji: "🌀", color: "#ff4fa3" },
+];
+
+let downloadedSongs = [...SONGS];
+let currentSong = null;
+
+// ============================================================
+// GAME STATE
+// ============================================================
+let gameState = {
+  circles: [],
+  score: 0,
+  combo: 0,
+  maxCombo: 0,
+  hits300: 0, hits100: 0, hits50: 0, misses: 0,
+  totalNotes: 0,
+  active: false,
+  startTime: 0,
+  songDuration: 0,
+  animFrame: null
+};
+
+// ============================================================
+// SCREEN MANAGER
+// ============================================================
+const screens = {
+  menu: document.getElementById('screen-menu'),
+  songs: document.getElementById('screen-songs'),
+  game: document.getElementById('screen-game'),
+  result: document.getElementById('screen-result'),
+};
+
+function showScreen(name) {
+  Object.values(screens).forEach(s => s.classList.add('hidden'));
+  screens[name].classList.remove('hidden');
+}
+
+// ============================================================
+// MENU
+// ============================================================
+document.getElementById('logo-btn').addEventListener('click', () => {
+  showScreen('songs');
+  renderSongs(downloadedSongs);
+});
+
+document.getElementById('btn-back-menu').addEventListener('click', () => showScreen('menu'));
+
+// ============================================================
+// SONG LIST
+// ============================================================
+function renderSongs(list, query = '') {
+  const container = document.getElementById('songs-list');
+  const info = document.getElementById('search-info');
+  container.innerHTML = '';
+
+  if (query && list.length === 0) {
+    // Show add option
+    const addCard = document.createElement('div');
+    addCard.className = 'song-card external';
+    addCard.innerHTML = `
+      <div class="song-cover" style="background:linear-gradient(135deg,#22d3ee22,#22d3ee44);color:#22d3ee;font-size:26px;">⬇</div>
+      <div class="song-info">
+        <div class="song-title">${escHtml(query)}</div>
+        <div class="song-artist">Kliknij aby pobrać i dodać do listy</div>
+      </div>
+      <div class="download-badge">⬇ Pobierz</div>
+    `;
+    addCard.addEventListener('click', () => downloadSong(query));
+    container.appendChild(addCard);
+    info.textContent = 'Nie znaleziono — możesz pobrać ten utwór';
+    return;
+  }
+
+  if (query) info.textContent = `Znaleziono: ${list.length} utwór(ów)`;
+  else info.textContent = '';
+
+  list.forEach(song => {
+    const card = document.createElement('div');
+    card.className = 'song-card' + (song.external ? ' external' : '');
+    card.innerHTML = `
+      <div class="song-cover" style="background:linear-gradient(135deg,${song.color}33,${song.color}66)">${song.emoji || '🎵'}</div>
+      <div class="song-info">
+        <div class="song-title">${escHtml(song.title)}</div>
+        <div class="song-artist">${escHtml(song.artist)}</div>
+      </div>
+      <div class="song-meta">
+        <span class="song-diff ${song.diffClass}">${song.diff}</span>
+        <span class="song-bpm">${song.bpm} BPM</span>
+      </div>
+    `;
+    card.addEventListener('click', () => selectSong(song));
+    container.appendChild(card);
+  });
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Search
+const searchInput = document.getElementById('search-input');
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value.trim().toLowerCase();
+  if (!q) { renderSongs(downloadedSongs); return; }
+  const found = downloadedSongs.filter(s =>
+    s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q)
+  );
+  renderSongs(found, q);
+});
+
+searchInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const q = searchInput.value.trim();
+    const found = downloadedSongs.filter(s =>
+      s.title.toLowerCase().includes(q.toLowerCase()) || s.artist.toLowerCase().includes(q.toLowerCase())
+    );
+    if (found.length === 0 && q) downloadSong(q);
+  }
+});
+
+function downloadSong(title) {
+  const bpms = [110, 120, 128, 130, 135, 140, 145, 150];
+  const diffs = [
+    { diff: 'Easy', diffClass: 'diff-easy' },
+    { diff: 'Normal', diffClass: 'diff-normal' },
+    { diff: 'Hard', diffClass: 'diff-hard' },
+    { diff: 'Insane', diffClass: 'diff-insane' },
+  ];
+  const emojis = ['🎵','🎤','🎸','🎹','🎺','🥁','🎻','🎷','🎼','🌟'];
+  const colors = ['#ff4fa3','#a855f7','#22d3ee','#4af7ff','#ffdd55','#a0ff80'];
+  const artists = ['NOVA ARTIST', 'STARLIGHT', 'COSMIC BEATS', 'WAVE RIDER', 'ULTRAVIOLET'];
+  const d = diffs[Math.floor(Math.random() * diffs.length)];
+  const newSong = {
+    id: Date.now(),
+    title: title,
+    artist: artists[Math.floor(Math.random() * artists.length)],
+    bpm: bpms[Math.floor(Math.random() * bpms.length)],
+    ...d,
+    emoji: emojis[Math.floor(Math.random() * emojis.length)],
+    color: colors[Math.floor(Math.random() * colors.length)],
+    external: true
+  };
+  downloadedSongs.push(newSong);
+  searchInput.value = '';
+  renderSongs(downloadedSongs);
+  showToast(`✓ Pobrano: ${title}`);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ============================================================
+// SONG SELECT → COUNTDOWN → GAME
+// ============================================================
+function selectSong(song) {
+  currentSong = song;
+  showScreen('game');
+  startCountdown(song);
+}
+
+function startCountdown(song) {
+  const overlay = document.getElementById('countdown-overlay');
+  const numEl = document.getElementById('countdown-num');
+  const songEl = document.getElementById('countdown-song');
+  overlay.classList.remove('hidden');
+  songEl.textContent = `${song.title} — ${song.artist}`;
+
+  let n = 3;
+  numEl.textContent = n;
+
+  const tick = setInterval(() => {
+    n--;
+    if (n <= 0) {
+      clearInterval(tick);
+      numEl.textContent = 'GO!';
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+        startGame(song);
+      }, 700);
+    } else {
+      numEl.textContent = n;
+      numEl.style.animation = 'none';
+      void numEl.offsetWidth;
+      numEl.style.animation = 'countdown-pop 0.9s ease';
+    }
+  }, 900);
+}
+
+// ============================================================
+// GAME ENGINE
+// ============================================================
+const gameCanvas = document.getElementById('game-canvas');
+const gCtx = gameCanvas.getContext('2d');
+let GW, GH;
+
+function resizeGameCanvas() {
+  GW = gameCanvas.width = gameCanvas.offsetWidth;
+  GH = gameCanvas.height = gameCanvas.offsetHeight;
+}
+
+window.addEventListener('resize', resizeGameCanvas);
+
+function generateBeatmap(song) {
+  // Generate notes based on BPM
+  const beatInterval = 60000 / song.bpm; // ms per beat
+  const totalDuration = 60000; // 60 second game
+  const notes = [];
+  const diffMult = { 'Easy': 0.5, 'Normal': 0.75, 'Hard': 1.0, 'Insane': 1.3 };
+  const mult = diffMult[song.diff] || 1.0;
+  const minInterval = beatInterval / mult;
+  const circleR = Math.min(GW, GH) * 0.055;
+  const margin = circleR * 2.5;
+
+  let t = 2000; // start at 2s
+  let noteIdx = 0;
+
+  // Patterns
+  const patterns = [
+    [0], [0, 0.5], [0, 0.33, 0.66], [0, 0.25, 0.5, 0.75],
+    [0, 0.5, 1.0], [0, 0.75]
+  ];
+
+  while (t < totalDuration - 2000) {
+    const pat = patterns[Math.floor(Math.random() * patterns.length)];
+    for (const offset of pat) {
+      const noteTime = t + offset * minInterval;
+      if (noteTime > totalDuration - 1500) break;
+      notes.push({
+        id: noteIdx++,
+        x: margin + Math.random() * (GW - margin * 2),
+        y: margin + Math.random() * (GH - margin * 2),
+        time: noteTime,
+        duration: 800 - (mult * 100), // approach time
+        radius: circleR,
+        hit: false,
+        missed: false,
+        hitResult: null,
+        hitTime: null,
+        alpha: 1,
+        number: noteIdx
+      });
+    }
+    t += minInterval * (0.8 + Math.random() * 0.4);
+  }
+  return { notes, duration: totalDuration };
+}
+
+function startGame(song) {
+  resizeGameCanvas();
+  const { notes, duration } = generateBeatmap(song);
+  gameState = {
+    circles: notes,
+    score: 0, combo: 0, maxCombo: 0,
+    hits300: 0, hits100: 0, hits50: 0, misses: 0,
+    totalNotes: notes.length,
+    active: true,
+    startTime: performance.now(),
+    songDuration: duration,
+    animFrame: null,
+    noteIdx: 0
+  };
+  updateHUD();
+  if (gameState.animFrame) cancelAnimationFrame(gameState.animFrame);
+  gameLoop();
+}
+
+function gameLoop() {
+  if (!gameState.active) return;
+  const now = performance.now();
+  const elapsed = now - gameState.startTime;
+
+  gCtx.clearRect(0, 0, GW, GH);
+
+  // Draw subtle grid/glow
+  drawBackground();
+
+  // Check for missed notes
+  const missWindow = 400;
+  for (const c of gameState.circles) {
+    if (!c.hit && !c.missed && elapsed > c.time + missWindow) {
+      c.missed = true;
+      gameState.misses++;
+      gameState.combo = 0;
+      updateHUD();
+      spawnHitFeedback(c.x, c.y, 'MISS', '#ff4444');
+    }
+  }
+
+  // Draw circles (back to front by time)
+  const visible = gameState.circles.filter(c => {
+    const dt = elapsed - c.time;
+    return !c.missed && (c.hit ? (dt < 700) : (dt > -c.duration - 100 && dt < 500));
+  });
+
+  // Sort: earlier = bigger approach ring = draw first
+  visible.sort((a, b) => b.time - a.time);
+
+  for (const c of visible) {
+    const dt = elapsed - c.time; // negative = not yet
+    if (c.hit) {
+      drawHitCircle(c, dt);
+    } else {
+      const progress = Math.max(0, Math.min(1, (dt + c.duration) / c.duration));
+      drawCircle(c, progress, dt);
+    }
+  }
+
+  // Progress bar
+  const prog = Math.min(1, elapsed / gameState.songDuration);
+  document.getElementById('progress-bar').style.width = (prog * 100) + '%';
+
+  // End game
+  if (elapsed >= gameState.songDuration) {
+    gameState.active = false;
+    // Miss remaining
+    for (const c of gameState.circles) {
+      if (!c.hit && !c.missed) { c.missed = true; gameState.misses++; }
+    }
+    setTimeout(() => showResults(), 500);
+    return;
+  }
+
+  gameState.animFrame = requestAnimationFrame(gameLoop);
+}
+
+function drawBackground() {
+  // Subtle radial pulse
+  const t = (performance.now() % 2000) / 2000;
+  const grad = gCtx.createRadialGradient(GW/2, GH/2, 0, GW/2, GH/2, Math.max(GW,GH)*0.7);
+  grad.addColorStop(0, `rgba(168,85,247,${0.03 + 0.02*Math.sin(t*Math.PI*2)})`);
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+  gCtx.fillStyle = grad;
+  gCtx.fillRect(0, 0, GW, GH);
+}
+
+function drawCircle(c, progress, dt) {
+  const r = c.radius;
+  const alpha = dt < -100 ? Math.max(0, (dt + c.duration) / 300) : 1;
+
+  // Approach ring
+  const approachR = r + (1 - progress) * r * 2.5;
+  gCtx.beginPath();
+  gCtx.arc(c.x, c.y, approachR, 0, Math.PI * 2);
+  gCtx.strokeStyle = `rgba(255,255,255,${alpha * 0.6})`;
+  gCtx.lineWidth = 2;
+  gCtx.stroke();
+
+  // Circle fill
+  const grad = gCtx.createRadialGradient(c.x - r*0.3, c.y - r*0.3, 0, c.x, c.y, r);
+  grad.addColorStop(0, `rgba(255,150,230,${alpha})`);
+  grad.addColorStop(0.5, `rgba(168,85,247,${alpha})`);
+  grad.addColorStop(1, `rgba(34,211,238,${alpha * 0.8})`);
+  gCtx.beginPath();
+  gCtx.arc(c.x, c.y, r, 0, Math.PI * 2);
+  gCtx.fillStyle = grad;
+  gCtx.fill();
+
+  // White ring
+  gCtx.beginPath();
+  gCtx.arc(c.x, c.y, r, 0, Math.PI * 2);
+  gCtx.strokeStyle = `rgba(255,255,255,${alpha * 0.8})`;
+  gCtx.lineWidth = 2.5;
+  gCtx.stroke();
+
+  // Number
+  gCtx.font = `bold ${Math.round(r * 0.7)}px Rajdhani, sans-serif`;
+  gCtx.fillStyle = `rgba(255,255,255,${alpha})`;
+  gCtx.textAlign = 'center';
+  gCtx.textBaseline = 'middle';
+  gCtx.fillText(c.number % 9 + 1, c.x, c.y);
+
+  // Glow
+  gCtx.shadowColor = '#a855f7';
+  gCtx.shadowBlur = 15;
+  gCtx.beginPath();
+  gCtx.arc(c.x, c.y, r, 0, Math.PI * 2);
+  gCtx.strokeStyle = `rgba(168,85,247,${alpha * 0.5})`;
+  gCtx.lineWidth = 4;
+  gCtx.stroke();
+  gCtx.shadowBlur = 0;
+}
+
+function drawHitCircle(c, dt) {
+  const s = 1 + dt * 0.003;
+  const a = Math.max(0, 1 - dt / 400);
+  gCtx.globalAlpha = a;
+  gCtx.beginPath();
+  gCtx.arc(c.x, c.y, c.radius * s, 0, Math.PI * 2);
+  const color = c.hitResult === 300 ? '#4af7ff' : c.hitResult === 100 ? '#a0ff80' : '#ffdd55';
+  gCtx.strokeStyle = color;
+  gCtx.lineWidth = 3;
+  gCtx.stroke();
+  gCtx.globalAlpha = 1;
+}
+
+// ============================================================
+// HIT DETECTION
+// ============================================================
+function handleHit(px, py) {
+  if (!gameState.active) return;
+  const now = performance.now();
+  const elapsed = now - gameState.startTime;
+
+  // Find nearest unhit circle within time window
+  let best = null, bestDt = Infinity;
+
+  for (const c of gameState.circles) {
+    if (c.hit || c.missed) continue;
+    const dt = Math.abs(elapsed - c.time);
+    if (dt > 450) continue;
+    const dist = Math.hypot(px - c.x, py - c.y);
+    if (dist > c.radius * 1.4) continue;
+    if (dt < bestDt) { bestDt = dt; best = c; }
+  }
+
+  if (!best) return;
+
+  best.hit = true;
+  best.hitTime = elapsed;
+
+  let result, pts, color;
+  if (bestDt < 80) {
+    result = 300; pts = 300; color = '#4af7ff';
+    gameState.hits300++;
+  } else if (bestDt < 200) {
+    result = 100; pts = 100; color = '#a0ff80';
+    gameState.hits100++;
+  } else {
+    result = 50; pts = 50; color = '#ffdd55';
+    gameState.hits50++;
+  }
+
+  best.hitResult = result;
+  gameState.combo++;
+  if (gameState.combo > gameState.maxCombo) gameState.maxCombo = gameState.combo;
+  gameState.score += pts * Math.max(1, Math.floor(gameState.combo / 10) + 1);
+
+  updateHUD();
+  spawnHitFeedback(best.x, best.y - best.radius, result, color);
+  animateCombo();
+}
+
+function animateCombo() {
+  const el = document.getElementById('hud-combo');
+  el.classList.remove('pop');
+  void el.offsetWidth;
+  el.classList.add('pop');
+}
+
+function updateHUD() {
+  document.getElementById('hud-score').textContent = String(gameState.score).padStart(6, '0');
+  document.getElementById('hud-combo').textContent = gameState.combo;
+
+  const total = gameState.hits300 + gameState.hits100 + gameState.hits50 + gameState.misses;
+  const acc = total === 0 ? 100 :
+    ((gameState.hits300 * 300 + gameState.hits100 * 100 + gameState.hits50 * 50) /
+    (total * 300)) * 100;
+  document.getElementById('hud-acc').textContent = acc.toFixed(2) + '%';
+}
+
+function spawnHitFeedback(x, y, text, color) {
+  const el = document.createElement('div');
+  el.className = 'hit-feedback';
+  el.textContent = text;
+  el.style.color = color;
+  el.style.left = (x - 30) + 'px';
+  el.style.top = (y - 10) + 'px';
+  document.getElementById('screen-game').appendChild(el);
+  setTimeout(() => el.remove(), 800);
+}
+
+// ============================================================
+// INPUT (Mouse + Touch)
+// ============================================================
+gameCanvas.addEventListener('mousedown', e => {
+  const rect = gameCanvas.getBoundingClientRect();
+  handleHit(e.clientX - rect.left, e.clientY - rect.top);
+  e.preventDefault();
+}, { passive: false });
+
+gameCanvas.addEventListener('touchstart', e => {
+  const rect = gameCanvas.getBoundingClientRect();
+  for (const t of e.changedTouches) {
+    handleHit(t.clientX - rect.left, t.clientY - rect.top);
+  }
+  e.preventDefault();
+}, { passive: false });
+
+// ============================================================
+// RESULTS
+// ============================================================
+function showResults() {
+  const gs = gameState;
+  const total = gs.hits300 + gs.hits100 + gs.hits50 + gs.misses;
+  const acc = total === 0 ? 100 :
+    ((gs.hits300 * 300 + gs.hits100 * 100 + gs.hits50 * 50) / (total * 300)) * 100;
+
+  let grade, gradeColor;
+  if (acc >= 99) { grade = 'SS'; gradeColor = '#4af7ff'; }
+  else if (acc >= 95) { grade = 'S'; gradeColor = '#ffdd55'; }
+  else if (acc >= 90) { grade = 'A'; gradeColor = '#a0ff80'; }
+  else if (acc >= 80) { grade = 'B'; gradeColor = '#22d3ee'; }
+  else if (acc >= 70) { grade = 'C'; gradeColor = '#a855f7'; }
+  else { grade = 'D'; gradeColor = '#ff4444'; }
+
+  document.getElementById('result-grade').textContent = grade;
+  document.getElementById('result-grade').style.color = gradeColor;
+  document.getElementById('result-title').textContent = currentSong ? currentSong.title.toUpperCase() : 'WYNIKI';
+  document.getElementById('res-score').textContent = gs.score.toLocaleString();
+  document.getElementById('res-acc').textContent = acc.toFixed(2) + '%';
+  document.getElementById('res-300').textContent = gs.hits300;
+  document.getElementById('res-100').textContent = gs.hits100;
+  document.getElementById('res-50').textContent = gs.hits50;
+  document.getElementById('res-miss').textContent = gs.misses;
+  document.getElementById('res-combo').textContent = gs.maxCombo + 'x';
+
+  showScreen('result');
+}
+
+document.getElementById('btn-retry').addEventListener('click', () => {
+  if (currentSong) {
+    showScreen('game');
+    startCountdown(currentSong);
+  }
+});
+
+document.getElementById('btn-songs').addEventListener('click', () => {
+  showScreen('songs');
+  renderSongs(downloadedSongs);
+});
+
+// ============================================================
+// KEYBOARD SUPPORT (Z, X for desktop)
+// ============================================================
+document.addEventListener('keydown', e => {
+  if (!gameState.active) return;
+  if (e.key === 'z' || e.key === 'Z' || e.key === 'x' || e.key === 'X') {
+    // Last approach-ring position
+    const now = performance.now();
+    const elapsed = now - gameState.startTime;
+    let best = null, bestDt = Infinity;
+    for (const c of gameState.circles) {
+      if (c.hit || c.missed) continue;
+      const dt = Math.abs(elapsed - c.time);
+      if (dt < 450 && dt < bestDt) { bestDt = dt; best = c; }
+    }
+    if (best) handleHit(best.x, best.y);
+  }
+});
+
+// Initial render
+resizeGameCanvas();
+</script>
+</body>
+</html>
