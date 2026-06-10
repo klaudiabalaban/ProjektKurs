@@ -1,0 +1,1786 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Code Crawler – Nauka Programowania</title>
+  <style>
+    /* ============================================================
+       SEKCJA 1: INTERFEJS UŻYTKOWNIKA – style HUD, menu, ekrany
+       ============================================================ */
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@700&display=swap');
+
+    :root {
+      --bg:        #0d0a1a;
+      --purple:    #2a1a4a;
+      --purple2:   #3d2060;
+      --green:     #0a2a0a;
+      --green2:    #1a4a1a;
+      --accent:    #39ff14;   /* neon green */
+      --accent2:   #a020f0;   /* neon purple */
+      --text:      #c8e6c9;
+      --dim:       #6a8f6a;
+      --danger:    #ff2244;
+      --gold:      #ffd700;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Share Tech Mono', monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ---- HUD (nagłówek z punktami i życiem) ---- */
+    #hud {
+      width: 800px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 16px;
+      background: linear-gradient(90deg, var(--purple), var(--green2));
+      border: 1px solid var(--accent2);
+      border-bottom: none;
+      border-radius: 4px 4px 0 0;
+      font-size: 14px;
+      letter-spacing: 1px;
+    }
+
+    #hud .hud-group { display: flex; gap: 20px; align-items: center; }
+
+    .hud-label {
+      color: var(--dim);
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    .hud-value {
+      color: var(--accent);
+      font-family: 'Orbitron', monospace;
+      font-size: 16px;
+    }
+
+    /* serca */
+    #hearts { display: flex; gap: 4px; }
+    .heart { font-size: 18px; transition: opacity .3s; }
+    .heart.lost { opacity: .2; filter: grayscale(1); }
+
+    /* ammo */
+    #ammo-display { color: var(--accent2); font-size: 13px; }
+
+    /* ---- Canvas gry ---- */
+    #gameCanvas {
+      display: block;
+      border: 1px solid var(--accent2);
+      border-top: none;
+      border-bottom: none;
+      background: #0d0a1a;
+      cursor: crosshair;
+    }
+
+    /* ---- Dolny pasek info ---- */
+    #info-bar {
+      width: 800px;
+      padding: 6px 16px;
+      background: linear-gradient(90deg, var(--green2), var(--purple));
+      border: 1px solid var(--accent2);
+      border-top: none;
+      border-radius: 0 0 4px 4px;
+      font-size: 11px;
+      color: var(--dim);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* ---- Ekrany nakładkowe (menu, game over, win) ---- */
+    .screen {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10,5,25,.92);
+      z-index: 100;
+      gap: 18px;
+      padding: 24px;
+    }
+
+    .screen.hidden { display: none; }
+
+    .screen h1 {
+      font-family: 'Orbitron', monospace;
+      font-size: 36px;
+      color: var(--accent);
+      text-shadow: 0 0 20px var(--accent), 0 0 40px var(--accent2);
+      letter-spacing: 3px;
+      text-align: center;
+    }
+
+    .screen h2 {
+      font-family: 'Orbitron', monospace;
+      font-size: 22px;
+      color: var(--accent2);
+      text-align: center;
+    }
+
+    .screen p {
+      font-size: 13px;
+      color: var(--text);
+      text-align: center;
+      max-width: 560px;
+      line-height: 1.8;
+    }
+
+    .screen .hint-box {
+      background: var(--purple);
+      border: 1px solid var(--accent2);
+      border-radius: 6px;
+      padding: 14px 24px;
+      font-size: 12px;
+      color: var(--dim);
+      max-width: 560px;
+      width: 100%;
+    }
+
+    .screen .hint-box span { color: var(--accent); }
+
+    /* ---- Przyciski ---- */
+    .btn {
+      font-family: 'Orbitron', monospace;
+      font-size: 14px;
+      padding: 12px 36px;
+      border: 2px solid var(--accent);
+      background: transparent;
+      color: var(--accent);
+      cursor: pointer;
+      letter-spacing: 2px;
+      border-radius: 3px;
+      transition: background .2s, color .2s, box-shadow .2s;
+      text-transform: uppercase;
+    }
+
+    .btn:hover {
+      background: var(--accent);
+      color: var(--bg);
+      box-shadow: 0 0 20px var(--accent);
+    }
+
+    .btn.secondary {
+      border-color: var(--accent2);
+      color: var(--accent2);
+    }
+
+    .btn.secondary:hover {
+      background: var(--accent2);
+      color: #fff;
+      box-shadow: 0 0 20px var(--accent2);
+    }
+
+    /* ---- Licznik poziomu ---- */
+    #level-banner {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%,-50%);
+      font-family: 'Orbitron', monospace;
+      font-size: 40px;
+      color: var(--gold);
+      text-shadow: 0 0 30px var(--gold);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .5s;
+      z-index: 200;
+    }
+
+    /* ---- Komunikat o funkcji JS ---- */
+    #js-tip {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--purple);
+      border: 1px solid var(--accent2);
+      border-radius: 6px;
+      padding: 10px 20px;
+      font-size: 12px;
+      color: var(--text);
+      max-width: 600px;
+      text-align: center;
+      opacity: 0;
+      transition: opacity .4s;
+      z-index: 300;
+      pointer-events: none;
+    }
+
+    #js-tip span { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<!-- ============================================================
+     SEKCJA 1: INTERFEJS UŻYTKOWNIKA – HUD, canvas, info-bar
+     ============================================================ -->
+<div id="hud">
+  <div class="hud-group">
+    <div>
+      <div class="hud-label">Punkty</div>
+      <div class="hud-value" id="score-display">0</div>
+    </div>
+    <div>
+      <div class="hud-label">Poziom</div>
+      <div class="hud-value" id="level-display">1</div>
+    </div>
+  </div>
+  <div class="hud-group">
+    <div>
+      <div class="hud-label">Życia</div>
+      <div id="hearts">
+        <span class="heart" id="h1">❤️</span>
+        <span class="heart" id="h2">❤️</span>
+        <span class="heart" id="h3">❤️</span>
+      </div>
+    </div>
+    <div>
+      <div class="hud-label">Pociski</div>
+      <div id="ammo-display">🟢🟢🟢🟢🟢</div>
+    </div>
+  </div>
+</div>
+
+<canvas id="gameCanvas" width="800" height="450"></canvas>
+
+<div id="info-bar">
+  <span>← → ruch | ↑ / Space skok | Z/X/LPM strzelaj</span>
+  <span id="tip-display">Skocz na potwora lub zestrzel go!</span>
+</div>
+
+<!-- ---- Ekran startowy ---- -->
+<div class="screen" id="startScreen">
+  <h1>CODE CRAWLER</h1>
+  <h2>Pokonaj Bugi i Null Pointery!</h2>
+  <p>
+    Jesteś programistą walczącym z błędami kodu.<br>
+    Skacz na potwory lub zestrzelj je pociskami.<br>
+    Zdobywaj punkty i ucz się programowania!
+  </p>
+  <div class="hint-box">
+    <span>← →</span> ruch &nbsp;|&nbsp;
+    <span>↑ / Space</span> skok &nbsp;|&nbsp;
+    <span>Z / X / LPM</span> strzelaj<br>
+    <span>Skok na głowę</span> potwora = natychmiastowe zabicie<br>
+    <span>Pocisk</span> w potwora = 50 pkt &nbsp;|&nbsp;
+    <span>Skok</span> = 100 pkt
+  </div>
+  <button class="btn" onclick="startGame()">▶ START</button>
+</div>
+
+<!-- ---- Game Over ---- -->
+<div class="screen hidden" id="gameOverScreen">
+  <h1>GAME OVER</h1>
+  <h2 id="final-score-label">Wynik: 0</h2>
+  <p>Bugi wygrały tę rundę… ale debugowanie to sztuka, nie porażka.</p>
+  <div class="hint-box">
+    <span>Wskazówka:</span> Skaczenie na głowę potwora daje 2× więcej punktów niż strzelanie!
+  </div>
+  <button class="btn" onclick="restartGame()">↺ SPRÓBUJ PONOWNIE</button>
+</div>
+
+<!-- ---- Wygrana ---- -->
+<div class="screen hidden" id="winScreen">
+  <h1>WYGRAŁEŚ!</h1>
+  <h2 id="win-score-label">Wynik: 0</h2>
+  <p>Kod jest czysty. Wszystkie Bugi pokonane. Świat programistów jest bezpieczny!</p>
+  <button class="btn" onclick="restartGame()">▶ GRAJ PONOWNIE</button>
+</div>
+
+<!-- ---- Baner poziomu ---- -->
+<div id="level-banner">POZIOM 1</div>
+
+<!-- ---- Dymek JS ---- -->
+<div id="js-tip"></div>
+
+<script>
+"use strict";
+/* ==============================================================
+   CODE CRAWLER – Gra Platformowa do Nauki Programowania
+   Autor: Claude
+   Kolorystyka: ciemny fiolet + ciemna zieleń
+
+   STRUKTURA KODU:
+   1.  Stałe i zmienne globalne
+   2.  Klasy: Player, Monster, Bullet, Platform, Coin
+   3.  Inicjalizacja poziomów
+   4.  Pętla gry (gameLoop)
+   5.  Logika aktualizacji
+   6.  Rysowanie
+   7.  Detekcja kolizji
+   8.  Obsługa zdarzeń
+   9.  HUD i UI
+   10. Uruchamianie / restart
+   ============================================================== */
+
+// ============================================================
+// SEKCJA 3 + 4: SCENA GRY I OBIEKTY – canvas, kontekst, dane
+// ============================================================
+const canvas  = document.getElementById('gameCanvas');
+const ctx     = canvas.getContext('2d');
+
+// ------- Stałe fizyki -------
+const GRAVITY      = 0.45;
+const JUMP_FORCE   = -11;
+const MOVE_SPEED   = 4.5;
+const BULLET_SPEED = 9;
+const MAX_AMMO     = 5;
+const AMMO_REGEN   = 4000;  // ms na jeden pocisk
+
+// ------- Wskazówki JS (dydaktyczne) -------
+const JS_TIPS = [
+  ['Funkcja', 'function movePlayer(dx) { player.x += dx; }'],
+  ['Zmienna', 'let score = 0; // przechowuje punkty gracza'],
+  ['Pętla', 'for (let i = 0; i < monsters.length; i++) { ... }'],
+  ['Warunek', 'if (player.y > canvas.height) { die(); }'],
+  ['Tablica', 'const bullets = []; // lista aktywnych pocisków'],
+  ['Obiekt', 'const player = { x: 100, y: 200, vx: 0, vy: 0 };'],
+  ['Zdarzenie', 'canvas.addEventListener("click", shoot);'],
+  ['Klasa', 'class Monster { constructor(x,y,type){...} }'],
+  ['Rekurencja', 'function fibonacci(n){ return n<2?n:fibonacci(n-1)+fibonacci(n-2); }'],
+  ['Callback', 'setTimeout(() => spawnMonster(), 2000);'],
+];
+
+// ------- Stan gry -------
+let state       = 'menu';   // 'menu' | 'playing' | 'paused' | 'dead' | 'win'
+let score       = 0;
+let lives       = 3;
+let currentLevel = 1;
+let ammo        = MAX_AMMO;
+let ammoTimer   = 0;
+let lastTime    = 0;
+let animFrame   = null;
+let invincible  = false;
+let invTimer    = 0;
+let cameraX     = 0;        // przesunięcie kamery (scroll poziomy)
+
+// ------- Obiekty sceny -------
+let player    = null;
+let platforms = [];
+let monsters  = [];
+let bullets   = [];
+let coins     = [];
+let particles = [];
+
+// ------- Klawiatura -------
+const keys = {};
+
+// ============================================================
+// SEKCJA 4: KLASY – Player, Monster, Bullet, Platform, Coin
+// ============================================================
+
+/**
+ * Klasa Player – reprezentuje postać gracza.
+ *
+ * Do czego służy: przechowuje pozycję, prędkość, wymiary gracza
+ *   oraz flagę 'onGround' do wykrywania, czy stoi na platformie.
+ * Kiedy tworzona: przy inicjalizacji każdego poziomu (initLevel).
+ * Argumenty konstruktora: x, y – pozycja startowa.
+ * Współpracuje z: updatePlayer, drawPlayer, checkCollisionPlayer.
+ */
+class Player {
+  constructor(x, y) {
+    this.x  = x;  this.y  = y;
+    this.w  = 28; this.h  = 36;
+    this.vx = 0;  this.vy = 0;
+    this.onGround = false;
+    this.dir = 1;           // 1=prawo, -1=lewo (do rysowania)
+    this.frame = 0;         // animacja kroków
+    this.frameTimer = 0;
+  }
+}
+
+/**
+ * Klasa Monster – wróg gracza (Bug, NullPointer, Segfault itp.).
+ *
+ * Do czego służy: przechowuje typ potwora, HP, prędkość, kierunek,
+ *   czy jest żywy, oraz parametry AI (zmiana kierunku co patrolRange px).
+ * Kiedy tworzona: w funkcji buildLevel przy generowaniu poziomu.
+ * Argumenty konstruktora: x, y – pozycja; type – 'bug'|'null'|'seg'|'inf'.
+ * Współpracuje z: updateMonsters, drawMonsters, checkCollisionBullets,
+ *   checkCollisionPlayer.
+ */
+class Monster {
+  constructor(x, y, type = 'bug') {
+    this.x    = x;  this.y = y;
+    this.type = type;
+    this.w    = type === 'seg'  ? 40 : type === 'inf' ? 44 : 32;
+    this.h    = type === 'seg'  ? 40 : type === 'inf' ? 44 : 30;
+    this.hp   = type === 'seg'  ? 2  : type === 'inf' ? 3  : 1;
+    this.maxHp = this.hp;
+    this.vx   = (type === 'inf' ? 2.2 : type === 'null' ? 1.8 : 1.4) * (Math.random()<.5?1:-1);
+    this.vy   = 0;
+    this.alive = true;
+    this.onGround = false;
+    this.patrolRange = 100 + Math.random() * 80;
+    this.startX  = x;
+    this.frame   = 0;
+    this.frameTimer = 0;
+    this.flashTimer = 0;   // blink po trafieniu
+  }
+}
+
+/**
+ * Klasa Bullet – pocisk wystrzelony przez gracza.
+ *
+ * Do czego służy: porusza się poziomo w jednym kierunku, kolizja z
+ *   potworem zadaje obrażenia, kolizja z platformą niszczy pocisk.
+ * Kiedy tworzona: w funkcji shoot() gdy gracz oddaje strzał.
+ * Argumenty konstruktora: x, y – pozycja; dir – kierunek (-1 lub 1).
+ * Współpracuje z: updateBullets, drawBullets, checkCollisionBullets.
+ */
+class Bullet {
+  constructor(x, y, dir) {
+    this.x    = x;    this.y = y;
+    this.w    = 10;   this.h = 6;
+    this.vx   = BULLET_SPEED * dir;
+    this.alive = true;
+    this.trail = [];   // ślad świetlny
+  }
+}
+
+/**
+ * Klasa Platform – element terenu / podłogi.
+ *
+ * Do czego służy: definiuje prostokąt, na którym gracz i potwory
+ *   mogą stać. Posiada flagę 'ground' (czy to podłoga) i opcjonalny kolor.
+ * Kiedy tworzona: w buildLevel dla każdego poziomu.
+ * Argumenty konstruktora: x, y, w, h, type – 'ground'|'platform'|'moving'.
+ * Współpracuje z: drawPlatforms, checkCollisionPlayer, checkCollisionMonsters,
+ *   checkCollisionBullets.
+ */
+class Platform {
+  constructor(x, y, w, h, type = 'platform') {
+    this.x = x; this.y = y; this.w = w; this.h = h;
+    this.type = type;
+    this.moveDir  = 1;
+    this.moveRange = 80;
+    this.startX   = x;
+    this.speed    = 1.2;
+  }
+}
+
+/**
+ * Klasa Coin – zbieralny element dający punkty.
+ *
+ * Do czego służy: statyczny obiekt; gracz zbiera go przez kolizję AABB,
+ *   co dodaje 25 punktów i efekt cząsteczkowy.
+ * Kiedy tworzona: w buildLevel.
+ * Argumenty konstruktora: x, y – pozycja startowa.
+ * Współpracuje z: updateCoins, drawCoins.
+ */
+class Coin {
+  constructor(x, y) {
+    this.x = x; this.y = y;
+    this.w = 16; this.h = 16;
+    this.alive = true;
+    this.bob = Math.random() * Math.PI * 2;  // faza animacji
+  }
+}
+
+// ============================================================
+// SEKCJA 3: SCENA GRY – budowanie poziomów
+// ============================================================
+
+/**
+ * buildLevel(levelNum) – generuje platformy, potwory i monety dla poziomu.
+ *
+ * Do czego służy: tworzy kompletny układ sceny dla danego poziomu.
+ *   Każdy poziom ma unikalny układ i trudniejsze potwory.
+ * Kiedy wywoływana: w initLevel() po ustawieniu numeru poziomu.
+ * Argumenty: levelNum – numer aktualnego poziomu (1–3).
+ * Zwraca: obiekt { platforms, monsters, coins, playerStart }.
+ * Współpracuje z: initLevel.
+ */
+function buildLevel(levelNum) {
+  const W = 1600; // szerokość świata (canvas x2)
+  const H = 450;
+  const ground = new Platform(0, H - 40, W, 40, 'ground');
+  let plats = [ground];
+  let mons  = [];
+  let coinList = [];
+
+  // ---- Poziom 1: Bugi (łatwe) ----
+  if (levelNum === 1) {
+    const layout = [
+      [150, 310, 120], [340, 250, 100], [530, 200, 130],
+      [700, 280, 110], [880, 220, 120], [1060, 310, 100],
+      [1220, 170, 140], [1400, 260, 120],
+    ];
+    layout.forEach(([x,y,w]) => plats.push(new Platform(x, y, w, 18)));
+    mons = [
+      new Monster(300,  H-70, 'bug'),
+      new Monster(560,  H-70, 'bug'),
+      new Monster(800,  H-70, 'bug'),
+      new Monster(200,  240,  'bug'),
+      new Monster(740,  210,  'bug'),
+      new Monster(1100, H-70, 'bug'),
+      new Monster(1320, H-70, 'bug'),
+    ];
+    coinList = spawnCoins([[200,290],[380,230],[580,180],[760,260],
+                           [940,200],[1100,290],[1280,150],[1460,240]]);
+  }
+
+  // ---- Poziom 2: Bugi + NullPointers ----
+  else if (levelNum === 2) {
+    const layout = [
+      [100, 320, 110], [280, 260, 90], [450, 190, 120],
+      [640, 260, 100], [810, 310, 80], [970, 220, 130],
+      [1150, 160, 100],[1330, 240, 120],[1480, 300, 100],
+    ];
+    layout.forEach(([x,y,w]) => {
+      const p = new Platform(x, y, w, 18);
+      plats.push(p);
+    });
+    // ruchoma platforma
+    const movPlat = new Platform(700, 320, 100, 18, 'moving');
+    plats.push(movPlat);
+    mons = [
+      new Monster(250,  H-70, 'bug'),
+      new Monster(500,  H-70, 'null'),
+      new Monster(700,  H-70, 'bug'),
+      new Monster(900,  H-70, 'null'),
+      new Monster(320,  170,  'null'),
+      new Monster(1000, 150,  'null'),
+      new Monster(1200, H-70, 'bug'),
+      new Monster(1400, H-70, 'null'),
+      new Monster(1500, 220,  'bug'),
+    ];
+    coinList = spawnCoins([[150,300],[330,240],[510,170],[680,240],
+                           [850,290],[1010,200],[1200,140],[1380,220],[1520,280]]);
+  }
+
+  // ---- Poziom 3: Bugi + Null + Segfault + Infinite Loop ----
+  else {
+    const layout = [
+      [80,  330, 100], [240, 270, 90],  [400, 210, 110],
+      [560, 290, 90],  [720, 220, 100], [880, 160, 120],
+      [1040,240, 100], [1200,170, 110], [1360,300, 90],
+      [1480,210, 120],
+    ];
+    layout.forEach(([x,y,w]) => plats.push(new Platform(x, y, w, 18)));
+    const m1 = new Platform(500, 330, 100, 18, 'moving');
+    const m2 = new Platform(1100,250, 100, 18, 'moving');
+    plats.push(m1, m2);
+    mons = [
+      new Monster(200,  H-70, 'bug'),
+      new Monster(400,  H-70, 'null'),
+      new Monster(600,  H-70, 'seg'),
+      new Monster(800,  H-70, 'null'),
+      new Monster(280,  190,  'bug'),
+      new Monster(760,  200,  'null'),
+      new Monster(920,  140,  'seg'),
+      new Monster(1050, H-70, 'inf'),
+      new Monster(1250, H-70, 'seg'),
+      new Monster(1400, H-70, 'inf'),
+      new Monster(1520, 180,  'null'),
+    ];
+    coinList = spawnCoins([[120,310],[300,250],[460,190],[620,270],
+                           [780,200],[940,140],[1100,220],[1260,150],
+                           [1420,280],[1520,190]]);
+  }
+
+  return {
+    platforms: plats,
+    monsters: mons,
+    coins: coinList,
+    playerStart: { x: 60, y: H - 80 },
+  };
+}
+
+/**
+ * spawnCoins(positions) – tworzy tablicę monet na zadanych pozycjach.
+ *
+ * Do czego służy: pomocnicza funkcja fabrykująca obiekty Coin
+ *   na podstawie tablicy współrzędnych [x, y].
+ * Kiedy wywoływana: wewnątrz buildLevel dla każdego poziomu.
+ * Argumenty: positions – tablica par [x, y].
+ * Zwraca: tablicę obiektów Coin.
+ */
+function spawnCoins(positions) {
+  return positions.map(([x, y]) => new Coin(x, y));
+}
+
+// ============================================================
+// SEKCJA 10: INICJALIZACJA I START
+// ============================================================
+
+/**
+ * initLevel(levelNum) – resetuje stan gry i inicjalizuje nowy poziom.
+ *
+ * Do czego służy: czyści wszystkie tablice obiektów, tworzy gracza,
+ *   ładuje nowy poziom, zeruje kamerę i ammo, pokazuje baner poziomu.
+ * Kiedy wywoływana: na początku gry (startGame), po przejściu poziomu,
+ *   po restarcie (restartGame).
+ * Argumenty: levelNum – numer poziomu do załadowania.
+ * Zwraca: nic (void).
+ * Współpracuje z: buildLevel, showLevelBanner, updateHUD.
+ */
+function initLevel(levelNum) {
+  currentLevel = levelNum;
+  const data = buildLevel(levelNum);
+  platforms = data.platforms;
+  monsters  = data.monsters;
+  coins     = data.coins;
+  bullets   = [];
+  particles = [];
+  cameraX   = 0;
+  ammo      = MAX_AMMO;
+  ammoTimer = 0;
+  invincible = false;
+  invTimer   = 0;
+
+  player = new Player(data.playerStart.x, data.playerStart.y);
+
+  updateHUD();
+  showLevelBanner(levelNum);
+}
+
+/**
+ * startGame() – uruchamia grę od poziomu 1.
+ *
+ * Do czego służy: ukrywa ekran startowy, inicjalizuje zmienne globalne
+ *   (score, lives), ładuje poziom 1 i startuje pętlę gry.
+ * Kiedy wywoływana: kliknięcie przycisku "START" na ekranie startowym.
+ * Argumenty: brak.
+ * Zwraca: nic.
+ */
+function startGame() {
+  document.getElementById('startScreen').classList.add('hidden');
+  score  = 0;
+  lives  = 3;
+  state  = 'playing';
+  initLevel(1);
+  if (animFrame) cancelAnimationFrame(animFrame);
+  lastTime = performance.now();
+  animFrame = requestAnimationFrame(gameLoop);
+}
+
+/**
+ * restartGame() – resetuje grę do stanu początkowego.
+ *
+ * Do czego służy: ukrywa ekrany Game Over i Win, resetuje wynik i życia,
+ *   inicjuje poziom 1 i wznawia pętlę.
+ * Kiedy wywoływana: kliknięcie "SPRÓBUJ PONOWNIE" lub "GRAJ PONOWNIE".
+ * Argumenty: brak.
+ * Zwraca: nic.
+ */
+function restartGame() {
+  document.getElementById('gameOverScreen').classList.add('hidden');
+  document.getElementById('winScreen').classList.add('hidden');
+  score  = 0;
+  lives  = 3;
+  state  = 'playing';
+  initLevel(1);
+  if (animFrame) cancelAnimationFrame(animFrame);
+  lastTime = performance.now();
+  animFrame = requestAnimationFrame(gameLoop);
+}
+
+// ============================================================
+// SEKCJA 4: PĘTLA GRY
+// ============================================================
+
+/**
+ * gameLoop(timestamp) – główna pętla gry, wywoływana przez requestAnimationFrame.
+ *
+ * Do czego służy: oblicza delta time, wywołuje update i draw co klatkę,
+ *   planuje następne wywołanie. To serce całej gry – bez niej nic się
+ *   nie rusza.
+ * Kiedy wywoływana: automatycznie przez przeglądarkę ~60 razy/sek.
+ * Argumenty: timestamp – czas w ms od załadowania strony (podawany przez RAF).
+ * Zwraca: nic.
+ * Współpracuje z: update, draw.
+ */
+function gameLoop(timestamp) {
+  const dt = Math.min(timestamp - lastTime, 50); // clamp na 50ms (anty-lag)
+  lastTime = timestamp;
+
+  if (state === 'playing') {
+    update(dt);
+    draw();
+  }
+
+  animFrame = requestAnimationFrame(gameLoop);
+}
+
+// ============================================================
+// SEKCJA 5: LOGIKA AKTUALIZACJI
+// ============================================================
+
+/**
+ * update(dt) – aktualizuje cały stan gry o jedną klatkę.
+ *
+ * Do czego służy: jest "dyspozytorem" – wywołuje kolejno
+ *   aktualizacje gracza, pocisków, potworów, monet, cząstek, kamery,
+ *   kolizji, regeneracji ammo i HUDa.
+ * Kiedy wywoływana: co klatkę przez gameLoop gdy state === 'playing'.
+ * Argumenty: dt – czas od poprzedniej klatki (ms).
+ * Zwraca: nic.
+ */
+function update(dt) {
+  updatePlayer(dt);
+  updateBullets();
+  updateMonsters(dt);
+  updateCoins();
+  updateParticles();
+  updateCamera();
+  updateAmmo(dt);
+  checkLevelComplete();
+  updateHUD();
+}
+
+// ============================================================
+// SEKCJA 6: STEROWANIE POSTACIĄ
+// ============================================================
+
+/**
+ * updatePlayer(dt) – obsługuje ruch, fizykę i kolizje gracza.
+ *
+ * Do czego służy: odczytuje wciśnięte klawisze, aplikuje prędkość
+ *   poziomą, grawitację, sprawdza kolizje z platformami,
+ *   zarządza timery nietykalności po otrzymaniu obrażeń.
+ * Kiedy wywoływana: co klatkę przez update().
+ * Argumenty: dt – delta time (ms), używany do timerów.
+ * Zwraca: nic.
+ * Współpracuje z: keys, resolveCollisionPlatforms, checkPlayerMonsterCollision,
+ *   playerDie.
+ */
+function updatePlayer(dt) {
+  if (!player) return;
+
+  // Poziomy ruch
+  player.vx = 0;
+  if (keys['ArrowLeft']  || keys['a'] || keys['A']) { player.vx = -MOVE_SPEED; player.dir = -1; }
+  if (keys['ArrowRight'] || keys['d'] || keys['D']) { player.vx =  MOVE_SPEED; player.dir =  1; }
+
+  // Skok
+  if ((keys['ArrowUp'] || keys['w'] || keys['W'] || keys[' ']) && player.onGround) {
+    player.vy = JUMP_FORCE;
+    player.onGround = false;
+    playSound('jump');
+  }
+
+  // Grawitacja
+  player.vy += GRAVITY;
+  player.x  += player.vx;
+  player.y  += player.vy;
+
+  // Animacja kroków
+  if (player.vx !== 0 && player.onGround) {
+    player.frameTimer += dt;
+    if (player.frameTimer > 120) { player.frame = (player.frame + 1) % 2; player.frameTimer = 0; }
+  }
+
+  // Kolizje z platformami
+  player.onGround = false;
+  resolveCollisionPlatforms(player, platforms);
+
+  // Granica mapy
+  player.x = Math.max(0, Math.min(1600 - player.w, player.x));
+  if (player.y > 500 && !invincible) { playerDie(); return; }
+
+  // Kolizja z potworami
+  if (!invincible) checkPlayerMonsterCollision();
+
+  // Timer nietykalności
+  if (invincible) {
+    invTimer -= dt;
+    if (invTimer <= 0) invincible = false;
+  }
+}
+
+/**
+ * resolveCollisionPlatforms(entity, platforms) – rozwiązuje kolizję
+ *   prostokątną między encją a listą platform.
+ *
+ * Do czego służy: iteruje po wszystkich platformach, dla każdej
+ *   sprawdza nakładanie AABB. Jeśli encja spada i jej dolna krawędź
+ *   wchodzi w platformę od góry, "wyrzuca" ją na wierzch (landing).
+ *   Obsługuje też zderzenia boczne i od dołu.
+ * Kiedy wywoływana: w updatePlayer i updateMonsters dla każdej encji.
+ * Argumenty:
+ *   entity – obiekt z polami { x, y, w, h, vx, vy, onGround }.
+ *   platforms – tablica obiektów Platform.
+ * Zwraca: nic (modyfikuje entity w miejscu).
+ */
+function resolveCollisionPlatforms(entity, plats) {
+  for (const p of plats) {
+    if (!aabb(entity, p)) continue;
+
+    const overlapX = Math.min(entity.x + entity.w, p.x + p.w) - Math.max(entity.x, p.x);
+    const overlapY = Math.min(entity.y + entity.h, p.y + p.h) - Math.max(entity.y, p.y);
+
+    if (overlapX < overlapY) {
+      // kolizja boczna
+      if (entity.x < p.x) entity.x -= overlapX; else entity.x += overlapX;
+      entity.vx = 0;
+    } else {
+      // kolizja pionowa
+      if (entity.vy >= 0 && entity.y + entity.h - entity.vy <= p.y + 2) {
+        entity.y = p.y - entity.h;
+        entity.vy = 0;
+        entity.onGround = true;
+      } else if (entity.vy < 0) {
+        entity.y = p.y + p.h;
+        entity.vy = 0;
+      }
+    }
+  }
+}
+
+// ============================================================
+// SEKCJA 4 + 7: OBIEKTY – Pociski
+// ============================================================
+
+/**
+ * updateBullets() – przesuwa pociski i sprawdza kolizje.
+ *
+ * Do czego służy: iteruje po tablicy bullets[], przesuwa każdy pocisk
+ *   wg prędkości, dodaje punkt do trail[], sprawdza czy wyszedł poza ekran
+ *   lub trafił w platformę / potwora. Usuwa nieaktywne pociski.
+ * Kiedy wywoływana: co klatkę przez update().
+ * Argumenty: brak.
+ * Zwraca: nic.
+ * Współpracuje z: checkCollisionBullets, spawnParticles.
+ */
+function updateBullets() {
+  for (const b of bullets) {
+    if (!b.alive) continue;
+    b.trail.push({ x: b.x, y: b.y });
+    if (b.trail.length > 6) b.trail.shift();
+    b.x += b.vx;
+    // Wyjście poza mapę
+    if (b.x < 0 || b.x > 1600) { b.alive = false; continue; }
+    // Kolizja z platformą
+    for (const p of platforms) {
+      if (aabb(b, p)) { b.alive = false; spawnParticles(b.x, b.y, '#39ff14', 4); break; }
+    }
+    if (!b.alive) continue;
+    // Kolizja z potworem
+    checkCollisionBullets(b);
+  }
+  // Czyszczenie
+  bullets = bullets.filter(b => b.alive);
+}
+
+/**
+ * checkCollisionBullets(bullet) – sprawdza trafienie pocisku w potwory.
+ *
+ * Do czego służy: dla danego pocisku iteruje potwory, jeśli AABB się
+ *   nakłada: zmniejsza HP potwora, dodaje efekty, daje punkty, ewentualnie
+ *   zabija potwora. Ustawia bullet.alive = false po trafieniu.
+ * Kiedy wywoływana: wewnątrz updateBullets() dla każdego aktywnego pocisku.
+ * Argumenty: bullet – obiekt Bullet.
+ * Zwraca: nic.
+ * Współpracuje z: killMonster, addScore, spawnParticles.
+ */
+function checkCollisionBullets(bullet) {
+  for (const m of monsters) {
+    if (!m.alive) continue;
+    if (aabb(bullet, m)) {
+      bullet.alive = false;
+      m.hp--;
+      m.flashTimer = 200;
+      spawnParticles(m.x + m.w / 2, m.y + m.h / 2, '#a020f0', 6);
+      playSound('hit');
+      if (m.hp <= 0) {
+        killMonster(m, 'bullet');
+      }
+      break;
+    }
+  }
+}
+
+// ============================================================
+// SEKCJA 4 + 7: OBIEKTY – Potwory
+// ============================================================
+
+/**
+ * updateMonsters(dt) – aktualizuje AI, ruch i fizykę potworów.
+ *
+ * Do czego służy: dla każdego żywego potwora: aplikuje grawitację,
+ *   przesuwa w aktualnym kierunku (patrol), sprawdza kolizje z platformami,
+ *   zawraca gdy wyjdzie poza zakres patrolu lub trafi w ścianę.
+ *   Zmniejsza timer flashowania po trafieniu.
+ * Kiedy wywoływana: co klatkę przez update().
+ * Argumenty: dt – delta time.
+ * Zwraca: nic.
+ */
+function updateMonsters(dt) {
+  for (const m of monsters) {
+    if (!m.alive) continue;
+
+    // Animacja
+    m.frameTimer += dt;
+    if (m.frameTimer > 200) { m.frame = (m.frame + 1) % 2; m.frameTimer = 0; }
+    if (m.flashTimer > 0) m.flashTimer -= dt;
+
+    // Grawitacja + ruch
+    m.vy += GRAVITY;
+    m.x  += m.vx;
+    m.y  += m.vy;
+
+    // Kolizje z platformami
+    m.onGround = false;
+    resolveCollisionPlatforms(m, platforms);
+
+    // Zawracanie na końcach patrolu lub ściany
+    if (Math.abs(m.x - m.startX) > m.patrolRange || m.x < 0 || m.x > 1580) {
+      m.vx *= -1;
+    }
+    m.x = Math.max(0, Math.min(1600 - m.w, m.x));
+  }
+}
+
+/**
+ * killMonster(monster, method) – zabija potwora i przyznaje punkty.
+ *
+ * Do czego służy: ustawia monster.alive = false, generuje cząstki,
+ *   efekt dźwiękowy, losuje wskazówkę JS i przyznaje punkty (100 za
+ *   skok, 50 za kulę). Upuszcza monetę.
+ * Kiedy wywoływana: w checkCollisionBullets lub checkPlayerMonsterCollision
+ *   gdy HP potwora spada do 0.
+ * Argumenty:
+ *   monster – obiekt Monster.
+ *   method  – 'bullet' | 'stomp' (metoda zabicia).
+ * Zwraca: nic.
+ * Współpracuje z: addScore, spawnParticles, showJSTip, coins.push.
+ */
+function killMonster(monster, method) {
+  monster.alive = false;
+  const pts = method === 'stomp' ? 100 : 50;
+  addScore(pts);
+  spawnParticles(monster.x + monster.w/2, monster.y + monster.h/2,
+    method === 'stomp' ? '#ffd700' : '#39ff14', 14);
+  playSound('kill');
+  // Upuszcza monetę
+  coins.push(new Coin(monster.x + monster.w/2 - 8, monster.y));
+  // Losowa wskazówka JS
+  const tip = JS_TIPS[Math.floor(Math.random() * JS_TIPS.length)];
+  showJSTip(tip[0], tip[1]);
+}
+
+/**
+ * checkPlayerMonsterCollision() – sprawdza kontakt gracza z potworami.
+ *
+ * Do czego służy: dla każdego żywego potwora sprawdza nakładanie AABB
+ *   z graczem. Jeśli gracz spada z góry (stomping) – zabija potwora
+ *   i wybija gracza w górę. Inaczej – gracz traci życie.
+ * Kiedy wywoływana: co klatkę w updatePlayer() jeśli gracz nie jest
+ *   nietykalny.
+ * Argumenty: brak (operuje na globalnych player i monsters).
+ * Zwraca: nic.
+ * Współpracuje z: killMonster, playerDie, invincible, player.vy.
+ */
+function checkPlayerMonsterCollision() {
+  for (const m of monsters) {
+    if (!m.alive) continue;
+    if (!aabb(player, m)) continue;
+
+    const playerBottom = player.y + player.h;
+    const monsterTop   = m.y;
+    // Stomp: gracz spada z góry
+    if (player.vy > 0 && playerBottom - player.vy <= monsterTop + 8) {
+      player.vy = JUMP_FORCE * 0.7;  // odbicie
+      m.hp -= 99; // natychmiastowe zabicie
+      killMonster(m, 'stomp');
+    } else {
+      playerDie();
+      return;
+    }
+  }
+}
+
+// ============================================================
+// SEKCJA 7: LOGIKA ROZGRYWKI
+// ============================================================
+
+/**
+ * playerDie() – obsługuje śmierć gracza.
+ *
+ * Do czego służy: odejmuje życie, ustawia nietykalność, jeśli
+ *   nie ma już żyć – pokazuje ekran Game Over. W przeciwnym razie
+ *   teleportuje gracza na start poziomu.
+ * Kiedy wywoływana: gdy gracz dotknie potwora lub wypadnie z mapy.
+ * Argumenty: brak.
+ * Zwraca: nic.
+ * Współpracuje z: lives, invincible, showScreen.
+ */
+function playerDie() {
+  lives--;
+  spawnParticles(player.x + player.w/2, player.y + player.h/2, '#ff2244', 12);
+  playSound('die');
+  if (lives <= 0) {
+    state = 'dead';
+    showScreen('gameOver');
+    return;
+  }
+  // Respawn z nietykalności
+  invincible = true;
+  invTimer   = 2000;
+  player.x   = 60;
+  player.y   = canvas.height - 80;
+  player.vx  = 0;
+  player.vy  = 0;
+}
+
+/**
+ * checkLevelComplete() – sprawdza, czy poziom został ukończony.
+ *
+ * Do czego służy: jeśli żaden potwór nie żyje, przechodzi do
+ *   następnego poziomu lub pokazuje ekran zwycięstwa.
+ * Kiedy wywoływana: co klatkę przez update().
+ * Argumenty: brak.
+ * Zwraca: nic.
+ * Współpracuje z: monsters, initLevel, showScreen.
+ */
+function checkLevelComplete() {
+  if (monsters.every(m => !m.alive)) {
+    if (currentLevel < 3) {
+      addScore(500); // bonus za poziom
+      initLevel(currentLevel + 1);
+    } else {
+      state = 'win';
+      showScreen('win');
+    }
+  }
+}
+
+/**
+ * addScore(pts) – dodaje punkty do globalnego wyniku.
+ *
+ * Do czego służy: zwiększa zmienną score o podaną wartość,
+ *   wywołuje updateHUD by odświeżyć wyświetlacz.
+ * Kiedy wywoływana: przy zbieraniu monety, zabijaniu potwora,
+ *   przejściu poziomu.
+ * Argumenty: pts – liczba punktów do dodania (number).
+ * Zwraca: nic.
+ */
+function addScore(pts) {
+  score += pts;
+  updateHUD();
+}
+
+/**
+ * updateCoins() – sprawdza zbieranie monet przez gracza.
+ *
+ * Do czego służy: iteruje żywe monety, sprawdza AABB z graczem,
+ *   jeśli kolizja – zbiera monetę (alive = false), daje 25 pkt,
+ *   animuje efekt cząsteczkowy, animuje pływanie (bob).
+ * Kiedy wywoływana: co klatkę przez update().
+ * Argumenty: brak.
+ * Zwraca: nic.
+ */
+function updateCoins() {
+  for (const c of coins) {
+    if (!c.alive) continue;
+    c.bob += 0.05;
+    if (aabb(player, { x: c.x, y: c.y + Math.sin(c.bob)*4, w: c.w, h: c.h })) {
+      c.alive = false;
+      addScore(25);
+      spawnParticles(c.x + 8, c.y + 8, '#ffd700', 8);
+      playSound('coin');
+    }
+  }
+}
+
+// ============================================================
+// SEKCJA 3: KAMERA
+// ============================================================
+
+/**
+ * updateCamera() – aktualizuje przesunięcie kamery za graczem.
+ *
+ * Do czego służy: przesuwa cameraX tak, by gracz był wyśrodkowany
+ *   horyzontalnie w oknie canvasa. Klampuje do granic mapy.
+ * Kiedy wywoływana: co klatkę przez update().
+ * Argumenty: brak.
+ * Zwraca: nic.
+ * Współpracuje z: cameraX, player, canvas.width.
+ */
+function updateCamera() {
+  const targetX = player.x - canvas.width / 2 + player.w / 2;
+  cameraX = Math.max(0, Math.min(1600 - canvas.width, targetX));
+}
+
+// ============================================================
+// SEKCJA 5: EFEKTY – Cząstki
+// ============================================================
+
+/**
+ * spawnParticles(x, y, color, count) – tworzy eksplozję cząstek.
+ *
+ * Do czego służy: dodaje do tablicy particles[] obiekty z losową
+ *   prędkością i krótkim TTL, tworząc efekt wizualny wybuchu/iskier.
+ * Kiedy wywoływana: przy zabijaniu potwora, zbieraniu monety,
+ *   trafieniu pocisku, śmierci gracza.
+ * Argumenty:
+ *   x, y  – pozycja źródła (px).
+ *   color – kolor cząstek (string CSS).
+ *   count – liczba cząstek.
+ * Zwraca: nic.
+ */
+function spawnParticles(x, y, color, count) {
+  for (let i = 0; i < count; i++) {
+    const angle = (Math.PI * 2 * i) / count + Math.random() * 0.5;
+    const speed = 2 + Math.random() * 4;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 2,
+      color,
+      life: 1,
+      decay: 0.03 + Math.random() * 0.03,
+      r: 3 + Math.random() * 3,
+    });
+  }
+}
+
+/**
+ * updateParticles() – aktualizuje pozycje i czas życia cząstek.
+ *
+ * Do czego służy: przesuwa każdą cząstkę, dodaje grawitację,
+ *   zmniejsza life o decay. Usuwa martwe cząstki.
+ * Kiedy wywoływana: co klatkę przez update().
+ * Argumenty: brak.
+ * Zwraca: nic.
+ */
+function updateParticles() {
+  for (const p of particles) {
+    p.x  += p.vx;
+    p.y  += p.vy;
+    p.vy += 0.15;
+    p.life -= p.decay;
+  }
+  particles = particles.filter(p => p.life > 0);
+}
+
+// ============================================================
+// SEKCJA 1: AMMO (regeneracja)
+// ============================================================
+
+/**
+ * updateAmmo(dt) – regeneruje amunicję w czasie.
+ *
+ * Do czego służy: liczy czas i co AMMO_REGEN ms dodaje jeden pocisk
+ *   (do max MAX_AMMO). Wywołuje updateHUD.
+ * Kiedy wywoływana: co klatkę przez update().
+ * Argumenty: dt – delta time (ms).
+ * Zwraca: nic.
+ */
+function updateAmmo(dt) {
+  if (ammo < MAX_AMMO) {
+    ammoTimer += dt;
+    if (ammoTimer >= AMMO_REGEN) {
+      ammo++;
+      ammoTimer = 0;
+      updateHUD();
+    }
+  }
+}
+
+// ============================================================
+// SEKCJA 8: OBSŁUGA ZDARZEŃ – klawiatura i mysz
+// ============================================================
+
+/**
+ * Zdarzenia klawiatury: keydown / keyup
+ *
+ * Do czego służą: rejestrują wciśnięte/zwolnione klawisze w obiekcie
+ *   keys{}. Klawisze 'Z','X','z','x' oraz Enter triggerują strzał.
+ * Kiedy wywoływane: przy każdym naciśnięciu/zwolnieniu klawisza.
+ * Obsługuje: strzały, skok, ruch, strzelanie.
+ * Współpracuje z: keys, shoot.
+ */
+document.addEventListener('keydown', e => {
+  keys[e.key] = true;
+  if (state !== 'playing') return;
+  if (e.key === 'z' || e.key === 'Z' || e.key === 'x' || e.key === 'X') {
+    shoot(player.dir);
+    e.preventDefault();
+  }
+  if ([' ', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'ArrowDown'].includes(e.key)) {
+    e.preventDefault();
+  }
+});
+
+document.addEventListener('keyup', e => {
+  keys[e.key] = false;
+});
+
+/**
+ * Zdarzenie kliknięcia myszą na canvas
+ *
+ * Do czego służy: oblicza kierunek od gracza do kursora myszy
+ *   i wywołuje shoot() we właściwym kierunku. Umożliwia sterowanie
+ *   myszą jako alternatywę dla klawiatury.
+ * Kiedy wywoływane: na każde LPM na canvas.
+ * Współpracuje z: shoot, cameraX, player.
+ */
+canvas.addEventListener('click', e => {
+  if (state !== 'playing') return;
+  const rect = canvas.getBoundingClientRect();
+  const mx   = e.clientX - rect.left + cameraX;
+  const dir  = mx > player.x + player.w / 2 ? 1 : -1;
+  shoot(dir);
+});
+
+/**
+ * shoot(dir) – tworzy pocisk w danym kierunku.
+ *
+ * Do czego służy: jeśli ammo > 0: tworzy obiekt Bullet i dodaje go
+ *   do bullets[]. Zmniejsza ammo, uruchamia efekt dźwiękowy.
+ * Kiedy wywoływana: przy wciśnięciu Z/X lub kliknięciu myszą.
+ * Argumenty: dir – kierunek strzału (-1 = lewo, 1 = prawo).
+ * Zwraca: nic.
+ * Współpracuje z: ammo, bullets, Bullet, playSound.
+ */
+function shoot(dir) {
+  if (!player || ammo <= 0) return;
+  ammo--;
+  const bx = dir === 1 ? player.x + player.w : player.x - 10;
+  const by = player.y + player.h / 2 - 3;
+  bullets.push(new Bullet(bx, by, dir));
+  playSound('shoot');
+  updateHUD();
+}
+
+// ============================================================
+// SEKCJA 3 + 4: RYSOWANIE – draw, drawXxx
+// ============================================================
+
+/**
+ * draw() – renderuje całą scenę na canvasie.
+ *
+ * Do czego służy: jest "reżyserem" rysowania – czyści canvas,
+ *   aplikuje transformację kamery, rysuje kolejno: tło, platformy,
+ *   monety, cząstki, pociski, potwory, gracza, a na koniec zdejmuje
+ *   transformację i rysuje overlay nietykalności.
+ * Kiedy wywoływana: co klatkę przez gameLoop.
+ * Argumenty: brak.
+ * Zwraca: nic.
+ */
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBackground();
+
+  ctx.save();
+  ctx.translate(-cameraX, 0);  // przesuń kamerę
+
+  drawPlatforms();
+  drawCoins();
+  drawParticles();
+  drawBullets();
+  drawMonsters();
+  drawPlayer();
+
+  ctx.restore();
+
+  if (invincible && Math.floor(invTimer / 100) % 2 === 0) {
+    ctx.fillStyle = 'rgba(255,34,68,.1)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+}
+
+/**
+ * drawBackground() – rysuje gradient tła sceny.
+ *
+ * Do czego służy: wypełnia canvas gradientem ciemny fiolet→zieleń,
+ *   rysuje "gwiazdy" (piksele debuggera) dla klimatu.
+ * Kiedy wywoływana: na początku draw() co klatkę.
+ * Argumenty: brak.
+ * Zwraca: nic.
+ */
+function drawBackground() {
+  const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  grad.addColorStop(0, '#0d0a1a');
+  grad.addColorStop(1, '#0a150a');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Siatka (kod binarny w tle)
+  ctx.fillStyle = 'rgba(58,32,96,.12)';
+  for (let x = 0; x < canvas.width; x += 40) {
+    for (let y = 0; y < canvas.height; y += 40) {
+      ctx.font = '9px Share Tech Mono';
+      ctx.fillText(Math.random() > .5 ? '1' : '0', x, y);
+    }
+  }
+}
+
+/**
+ * drawPlatforms() – rysuje wszystkie platformy.
+ *
+ * Do czego służy: rysuje każdą platformę jako prostokąt z gradientem
+ *   fioletowo-zielonym, bordem neon i cieniem.
+ * Kiedy wywoływana: w draw() po przesunięciu kamery.
+ * Argumenty: brak.
+ * Zwraca: nic.
+ */
+function drawPlatforms() {
+  for (const p of platforms) {
+    // Ciało platformy
+    const grad = ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.h);
+    grad.addColorStop(0, p.type === 'ground' ? '#1a4a1a' : '#2a1a4a');
+    grad.addColorStop(1, p.type === 'ground' ? '#0a2a0a' : '#1a0a2a');
+    ctx.fillStyle = grad;
+    ctx.fillRect(p.x, p.y, p.w, p.h);
+
+    // Górna linia neon
+    ctx.strokeStyle = p.type === 'moving' ? '#ffd700' : '#39ff14';
+    ctx.lineWidth   = 2;
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    ctx.lineTo(p.x + p.w, p.y);
+    ctx.stroke();
+
+    // Boczne krawędzie
+    ctx.strokeStyle = 'rgba(160,32,240,.4)';
+    ctx.lineWidth   = 1;
+    ctx.strokeRect(p.x, p.y, p.w, p.h);
+  }
+}
+
+/**
+ * drawPlayer() – rysuje postać gracza.
+ *
+ * Do czego służy: rysuje gracza jako pixel-artowy ludzik (programista)
+ *   z ciałem, głową, oczami i kierunkiem patrzenia. Mruga podczas
+ *   nietykalności.
+ * Kiedy wywoływana: w draw() na końcu rysowania sceny.
+ * Argumenty: brak.
+ * Zwraca: nic.
+ */
+function drawPlayer() {
+  if (!player) return;
+  const { x, y, w, h, dir } = player;
+
+  ctx.save();
+  if (invincible && Math.floor(invTimer / 120) % 2 === 0) {
+    ctx.globalAlpha = 0.4;
+  }
+
+  // Cień
+  ctx.fillStyle = 'rgba(0,0,0,.3)';
+  ctx.beginPath();
+  ctx.ellipse(x + w/2, y + h + 4, w/2, 5, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // Nogi (animacja kroków)
+  ctx.fillStyle = '#1a4a1a';
+  if (player.frame === 0) {
+    ctx.fillRect(x + 4,  y + h - 10, 8, 10);
+    ctx.fillRect(x + w - 12, y + h - 8,  8, 8);
+  } else {
+    ctx.fillRect(x + 4,  y + h - 8,  8, 8);
+    ctx.fillRect(x + w - 12, y + h - 10, 8, 10);
+  }
+
+  // Tułów
+  const bodyGrad = ctx.createLinearGradient(x, y, x+w, y+h);
+  bodyGrad.addColorStop(0, '#3d2060');
+  bodyGrad.addColorStop(1, '#1a4a1a');
+  ctx.fillStyle = bodyGrad;
+  ctx.fillRect(x + 2, y + 12, w - 4, h - 22);
+
+  // Ramiona
+  ctx.fillStyle = '#3d2060';
+  ctx.fillRect(x - 4, y + 14, 8, 10);
+  ctx.fillRect(x + w - 4, y + 14, 8, 10);
+
+  // Głowa
+  ctx.fillStyle = '#c8e6c9';
+  ctx.beginPath();
+  ctx.roundRect(x + 4, y, w - 8, 18, 4);
+  ctx.fill();
+
+  // Oczy (patrzą w kierunku ruchu)
+  ctx.fillStyle = '#0a150a';
+  const eyeX = dir === 1 ? x + w - 11 : x + 4;
+  ctx.fillRect(eyeX, y + 5, 5, 5);
+  ctx.fillStyle = '#39ff14';
+  ctx.fillRect(eyeX + 1, y + 6, 2, 2);
+
+  // Logo na koszulce
+  ctx.font = 'bold 9px monospace';
+  ctx.fillStyle = '#39ff14';
+  ctx.fillText('{}', x + 6, y + h - 14);
+
+  ctx.restore();
+}
+
+/**
+ * drawMonsters() – rysuje wszystkich żywych potworów.
+ *
+ * Do czego służy: iteruje tablicę monsters[], rysuje każdego
+ *   w zależności od typu (bug, null, seg, inf) z odpowiednią ikoną
+ *   i paskiem HP dla potworów z więcej niż 1 HP. Mruga po trafieniu.
+ * Kiedy wywoływana: w draw().
+ * Argumenty: brak.
+ * Zwraca: nic.
+ */
+function drawMonsters() {
+  for (const m of monsters) {
+    if (!m.alive) continue;
+
+    ctx.save();
+    if (m.flashTimer > 0) {
+      ctx.globalAlpha = m.flashTimer % 100 < 50 ? 0.4 : 1;
+    }
+
+    const { x, y, w, h } = m;
+    const bob = Math.sin(Date.now() * 0.004 + x) * 2;
+
+    // Cień
+    ctx.fillStyle = 'rgba(0,0,0,.3)';
+    ctx.beginPath();
+    ctx.ellipse(x+w/2, y+h+bob+4, w/2, 5, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    // Ciało
+    const colors = {
+      bug:  ['#2a1a4a','#a020f0'],
+      null: ['#1a3a1a','#39ff14'],
+      seg:  ['#3a0a0a','#ff2244'],
+      inf:  ['#1a2a3a','#00cfff'],
+    };
+    const [body, accent] = colors[m.type] || colors.bug;
+    ctx.fillStyle = body;
+    ctx.beginPath();
+    ctx.roundRect(x, y + bob, w, h, 6);
+    ctx.fill();
+    ctx.strokeStyle = accent;
+    ctx.lineWidth   = 2;
+    ctx.stroke();
+
+    // Ikona / etykieta
+    ctx.font      = `bold ${m.type === 'inf' ? 9 : 11}px monospace`;
+    ctx.fillStyle = accent;
+    ctx.textAlign = 'center';
+    const labels = { bug:'🐛', null:'null', seg:'SEGF', inf:'∞' };
+    ctx.fillText(labels[m.type], x+w/2, y + bob + h/2 + 4);
+    ctx.textAlign = 'left';
+
+    // Oczy
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(x+4,  y+bob+5, 8, 8);
+    ctx.fillRect(x+w-12, y+bob+5, 8, 8);
+    ctx.fillStyle = accent;
+    ctx.fillRect(x+5 + (m.vx>0?2:0), y+bob+6, 4, 4);
+    ctx.fillRect(x+w-11 + (m.vx>0?2:0), y+bob+6, 4, 4);
+
+    // HP bar (jeśli > 1)
+    if (m.maxHp > 1) {
+      ctx.fillStyle = '#333';
+      ctx.fillRect(x, y+bob-8, w, 5);
+      ctx.fillStyle = accent;
+      ctx.fillRect(x, y+bob-8, w * (m.hp / m.maxHp), 5);
+    }
+
+    ctx.restore();
+  }
+}
+
+/**
+ * drawBullets() – rysuje aktywne pociski wraz z ich śladem.
+ *
+ * Do czego służy: dla każdego żywego pocisku rysuje trail[]
+ *   (blednie wstecz) i sam pocisk jako świecący prostokąt.
+ * Kiedy wywoływana: w draw().
+ * Argumenty: brak.
+ * Zwraca: nic.
+ */
+function drawBullets() {
+  for (const b of bullets) {
+    if (!b.alive) continue;
+    // Trail
+    b.trail.forEach((pt, i) => {
+      ctx.globalAlpha = (i / b.trail.length) * 0.5;
+      ctx.fillStyle   = '#39ff14';
+      ctx.fillRect(pt.x, pt.y, b.w * (i / b.trail.length), b.h);
+    });
+    ctx.globalAlpha = 1;
+    // Pocisk
+    ctx.fillStyle = '#39ff14';
+    ctx.shadowBlur  = 10;
+    ctx.shadowColor = '#39ff14';
+    ctx.fillRect(b.x, b.y, b.w, b.h);
+    ctx.shadowBlur  = 0;
+  }
+}
+
+/**
+ * drawCoins() – rysuje zbieralne monety.
+ *
+ * Do czego służy: dla każdej żywej monety rysuje pływający okrąg
+ *   z efektem glowa (glow). Faza bob zapewnia animację sinusoidalną.
+ * Kiedy wywoływana: w draw().
+ * Argumenty: brak.
+ * Zwraca: nic.
+ */
+function drawCoins() {
+  for (const c of coins) {
+    if (!c.alive) continue;
+    const bobY = Math.sin(c.bob) * 4;
+    ctx.fillStyle   = '#ffd700';
+    ctx.shadowBlur  = 8;
+    ctx.shadowColor = '#ffd700';
+    ctx.beginPath();
+    ctx.arc(c.x + 8, c.y + 8 + bobY, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff8';
+    ctx.beginPath();
+    ctx.arc(c.x + 6, c.y + 6 + bobY, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+}
+
+/**
+ * drawParticles() – rysuje wszystkie aktywne cząstki.
+ *
+ * Do czego służy: iteruje particles[], rysuje każdą jako kółko
+ *   z przezroczystością proporcjonalną do life.
+ * Kiedy wywoływana: w draw().
+ * Argumenty: brak.
+ * Zwraca: nic.
+ */
+function drawParticles() {
+  for (const p of particles) {
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle   = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ============================================================
+// SEKCJA 1: HUD i UI
+// ============================================================
+
+/**
+ * updateHUD() – odświeża elementy HUD na stronie HTML.
+ *
+ * Do czego służy: synchronizuje wartości zmiennych gry (score, lives,
+ *   ammo, level) z elementami DOM (hud-value, hearts, ammo-display).
+ * Kiedy wywoływana: po każdej zmianie punktów, życia lub ammo,
+ *   oraz co klatkę przez update().
+ * Argumenty: brak.
+ * Zwraca: nic.
+ */
+function updateHUD() {
+  document.getElementById('score-display').textContent = score;
+  document.getElementById('level-display').textContent = currentLevel;
+
+  // Serca
+  for (let i = 1; i <= 3; i++) {
+    const el = document.getElementById('h' + i);
+    el.classList.toggle('lost', i > lives);
+  }
+
+  // Ammo
+  document.getElementById('ammo-display').textContent =
+    '🟢'.repeat(ammo) + '⚫'.repeat(MAX_AMMO - ammo);
+}
+
+/**
+ * showScreen(name) – pokazuje nakładkowy ekran (game over / win).
+ *
+ * Do czego służy: ustawia finalny wynik w etykietach ekranu,
+ *   usuwa klasę 'hidden' z odpowiedniego elementu DOM.
+ * Kiedy wywoływana: w playerDie (gdy lives === 0) i checkLevelComplete
+ *   (gdy poziom 3 ukończony).
+ * Argumenty: name – 'gameOver' | 'win'.
+ * Zwraca: nic.
+ */
+function showScreen(name) {
+  if (name === 'gameOver') {
+    document.getElementById('final-score-label').textContent = `Wynik: ${score}`;
+    document.getElementById('gameOverScreen').classList.remove('hidden');
+  } else if (name === 'win') {
+    document.getElementById('win-score-label').textContent = `Wynik: ${score}`;
+    document.getElementById('winScreen').classList.remove('hidden');
+  }
+}
+
+/**
+ * showLevelBanner(levelNum) – wyświetla animowany baner "POZIOM X".
+ *
+ * Do czego służy: ustawia tekst banera i fadeuje go z opacity 1 do 0
+ *   w ciągu 1.5 sekundy przez manipulację stylów CSS.
+ * Kiedy wywoływana: w initLevel() po załadowaniu nowego poziomu.
+ * Argumenty: levelNum – numer poziomu (number).
+ * Zwraca: nic.
+ */
+function showLevelBanner(levelNum) {
+  const el = document.getElementById('level-banner');
+  el.textContent = `POZIOM ${levelNum}`;
+  el.style.opacity = '1';
+  setTimeout(() => { el.style.opacity = '0'; }, 1500);
+}
+
+/**
+ * showJSTip(concept, code) – wyświetla dydaktyczną wskazówkę JavaScript.
+ *
+ * Do czego służy: pojawia się po każdym zabiciu potwora, pokazując
+ *   krótki fragment kodu JS z nazwą konceptu (zmienna, funkcja, pętla...).
+ *   Znika automatycznie po 3 sekundach.
+ * Kiedy wywoływana: w killMonster().
+ * Argumenty:
+ *   concept – nazwa konceptu JS (string).
+ *   code    – przykładowy fragment kodu (string).
+ * Zwraca: nic.
+ */
+function showJSTip(concept, code) {
+  const el  = document.getElementById('js-tip');
+  el.innerHTML = `<span>${concept}:</span> &nbsp;<code>${escHtml(code)}</code>`;
+  el.style.opacity = '1';
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => { el.style.opacity = '0'; }, 3000);
+}
+
+/**
+ * escHtml(str) – escapuje znaki HTML w stringu kodu.
+ *
+ * Do czego służy: zapobiega wstrzykiwaniu tagów HTML w wyświetlanym
+ *   kodzie JS (bezpieczeństwo i poprawne wyświetlanie < > &).
+ * Kiedy wywoływana: w showJSTip().
+ * Argumenty: str – surowy string.
+ * Zwraca: string z zamienionymi < > & na encje HTML.
+ */
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ============================================================
+// SEKCJA 8: KOLIZJA AABB (helper)
+// ============================================================
+
+/**
+ * aabb(a, b) – sprawdza kolizję dwóch prostokątów metodą AABB.
+ *
+ * Do czego służy: Axis-Aligned Bounding Box – podstawowy algorytm
+ *   detekcji kolizji. Zwraca true jeśli prostokąty a i b nakładają się.
+ * Kiedy wywoływana: we wszystkich funkcjach kolizji: resolveCollisionPlatforms,
+ *   checkCollisionBullets, checkPlayerMonsterCollision, updateCoins.
+ * Argumenty:
+ *   a, b – obiekty z polami { x, y, w, h }.
+ * Zwraca: boolean – true gdy kolizja, false gdy brak.
+ */
+function aabb(a, b) {
+  return (
+    a.x < b.x + b.w &&
+    a.x + a.w > b.x &&
+    a.y < b.y + b.h &&
+    a.y + a.h > b.y
+  );
+}
+
+// ============================================================
+// SEKCJA 5: DŹWIĘK (Web Audio API – syntetyczny)
+// ============================================================
+
+/**
+ * playSound(type) – generuje syntetyczny efekt dźwiękowy.
+ *
+ * Do czego służy: używa Web Audio API do tworzenia prostych dźwięków
+ *   bez zewnętrznych plików audio: beep skoku, hit, kill, itp.
+ *   Nie wymaga zewnętrznych bibliotek.
+ * Kiedy wywoływana: w shoot, playerDie, killMonster, updateCoins.
+ * Argumenty: type – 'jump'|'shoot'|'hit'|'kill'|'die'|'coin'.
+ * Zwraca: nic.
+ */
+let audioCtx = null;
+function playSound(type) {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.connect(g);
+    g.connect(audioCtx.destination);
+
+    const presets = {
+      jump:  { f: 300, f2: 600, t: .12, wave: 'sine',    vol: .15 },
+      shoot: { f: 800, f2: 200, t: .08, wave: 'sawtooth', vol: .1  },
+      hit:   { f: 200, f2: 100, t: .1,  wave: 'square',  vol: .12 },
+      kill:  { f: 400, f2: 900, t: .25, wave: 'sine',    vol: .18 },
+      die:   { f: 400, f2: 50,  t: .4,  wave: 'sawtooth',vol: .2  },
+      coin:  { f: 900, f2:1200, t: .15, wave: 'sine',    vol: .1  },
+    };
+    const p = presets[type] || presets.hit;
+    const now = audioCtx.currentTime;
+    o.type = p.wave;
+    o.frequency.setValueAtTime(p.f, now);
+    o.frequency.linearRampToValueAtTime(p.f2, now + p.t);
+    g.gain.setValueAtTime(p.vol, now);
+    g.gain.linearRampToValueAtTime(0, now + p.t);
+    o.start(now);
+    o.stop(now + p.t);
+  } catch(e) { /* ignoruj – dźwięk opcjonalny */ }
+}
+
+// ============================================================
+// Ruchome platformy – aktualizacja w pętli updateMonsters
+// ============================================================
+// Dodajemy aktualizację ruchomych platform do update()
+const _origUpdate = update;
+// Rozszerzamy update o updateMovingPlatforms
+
+/**
+ * updateMovingPlatforms() – przesuwa platformy typu 'moving'.
+ *
+ * Do czego służy: porusza platformy tam i z powrotem w zakresie
+ *   moveRange. Jeśli gracz stoi na ruchomej platformie, przesuwa
+ *   się razem z nią (parent platform tracking).
+ * Kiedy wywoływana: co klatkę wewnątrz update() (rozszerzenie).
+ * Argumenty: brak.
+ * Zwraca: nic.
+ */
+function updateMovingPlatforms() {
+  for (const p of platforms) {
+    if (p.type !== 'moving') continue;
+    p.x += p.speed * p.moveDir;
+    if (p.x > p.startX + p.moveRange || p.x < p.startX - p.moveRange) {
+      p.moveDir *= -1;
+    }
+    // Przesuń gracza stojącego na tej platformie
+    if (player && player.onGround) {
+      if (aabb(player, { x: p.x, y: p.y - 2, w: p.w, h: 4 })) {
+        player.x += p.speed * p.moveDir;
+      }
+    }
+  }
+}
+
+// Monkey-patch update by dodać ruchome platformy
+const updateOrig = update;
+update = function(dt) {
+  updateOrig(dt);
+  updateMovingPlatforms();
+};
+
+// ============================================================
+// Start – uruchomienie (nie startujemy gry automatycznie,
+//         czekamy na klik "START")
+// ============================================================
+updateHUD();
+</script>
+</body>
+</html>
