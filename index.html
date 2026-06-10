@@ -1079,6 +1079,23 @@ function checkBulletBugCollisions() {
     return !hit;
   });
 }
+  const bug = {
+  x,
+  y,
+  w: 32,
+  h: 32,
+  color: "#ff0000", // zawsze czerwony
+  pts: 100
+};
+  const bug = {
+  x,
+  y,
+  w: 32,
+  h: 32,
+  color: "#ff0000", // zawsze czerwony
+  pts: 100
+};
+  
 
 /**
  * killBug(bug)
@@ -1765,86 +1782,6 @@ document.addEventListener("DOMContentLoaded", init);
 │                  │ Nie wykonuje fill/stroke – robi to wywołujący.            │
 └──────────────────┴──────────────────────────────────────────────────────────┘
 -->
-  <canvas id="game-canvas"></canvas>
-  function spawnMonster() {
 
-  const tpl =
-      MONSTER_TYPES[
-          Math.floor(Math.random() * MONSTER_TYPES.length)
-      ];
-
-  state.monsters.push({
-
-      x: Math.random() * canvas.width,
-
-      y: 100 + Math.random() * 250,
-
-      w: 60,
-      h: 60,
-
-      hp: tpl.hp,
-
-      speed: tpl.speed,
-
-      dir: Math.random() < 0.5 ? -1 : 1,
-
-      color: tpl.color,
-
-      name: tpl.name,
-
-      angle: 0
-  });
-}state.monsters = [];
-
-for(let i=0;i<state.level+2;i++){
-   spawnMonster();
-}function updateMonsters() {
-
-  state.monsters.forEach(monster => {
-
-      monster.x += monster.speed * monster.dir;
-
-      monster.angle += 0.05;
-
-      monster.y += Math.sin(monster.angle) * 1.5;
-
-      if(monster.x < 0){
-          monster.dir = 1;
-      }
-
-      if(monster.x + monster.w > canvas.width){
-          monster.dir = -1;
-      }
-  });
-}state.monsters = state.monsters.filter(monster => {
-
-    if(rectsOverlap(bulletRect, monster)) {
-
-        monster.hp--;
-
-        spawnParticles(
-            monster.x,
-            monster.y,
-            monster.color,
-            10
-        );
-
-        if(monster.hp <= 0){
-
-            addScore(150);
-
-            spawnParticles(
-                monster.x,
-                monster.y,
-                monster.color,
-                30
-            );
-
-            return false;
-        }
-    }
-
-    return true;
-});
 </body>
 </html>
