@@ -1,1299 +1,1769 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>RhythmClick!</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CodeRunner – Nauka programowania przez grę</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700;900&family=Rajdhani:wght@400;600;700&display=swap');
+  /* =============================================
+     1. INTERFEJS UŻYTKOWNIKA – CSS
+     ============================================= */
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@700&display=swap');
 
   :root {
-    --pink: #FF4FA3;
-    --purple: #A855F7;
-    --cyan: #22D3EE;
-    --dark: #0A0010;
-    --dark2: #110020;
-    --dark3: #1A0035;
-    --text: #F0E6FF;
-    --hit300: #4AF7FF;
-    --hit100: #A0FF80;
-    --hit50: #FFDD55;
-    --miss: #FF4444;
+    --bg:        #0a0e1a;
+    --panel:     #0f1629;
+    --border:    #1e3a5f;
+    --green:     #00ff9d;
+    --cyan:      #00e5ff;
+    --red:       #ff3a5c;
+    --yellow:    #ffe066;
+    --dim:       #4a6080;
+    --text:      #cce8ff;
+    --mono:      'Share Tech Mono', monospace;
+    --display:   'Orbitron', sans-serif;
   }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    background: var(--dark);
-    font-family: 'Exo 2', sans-serif;
+    background: var(--bg);
     color: var(--text);
+    font-family: var(--mono);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
     overflow: hidden;
-    width: 100vw;
-    height: 100vh;
-    position: relative;
-  }
-
-  /* ===== PARTICLES BG ===== */
-  #bg-canvas {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    z-index: 0;
-    pointer-events: none;
-  }
-
-  /* ===== SCREENS ===== */
-  .screen {
-    position: absolute;
-    width: 100%; height: 100%;
-    top: 0; left: 0;
-    z-index: 10;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    transition: opacity 0.5s ease;
-  }
-  .screen.hidden { opacity: 0; pointer-events: none; }
-
-  /* ===== MENU SCREEN ===== */
-  #screen-menu {
-    background: radial-gradient(ellipse at center, #1a0035 0%, #0A0010 70%);
-  }
-
-  .logo-wrap {
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-    animation: float 3s ease-in-out infinite;
     user-select: none;
   }
 
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-14px); }
-  }
-
-  .logo-circle {
-    width: 160px; height: 160px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 35% 35%, #ff9fe6, #a855f7 45%, #22d3ee 100%);
-    box-shadow:
-      0 0 40px rgba(168,85,247,0.6),
-      0 0 80px rgba(255,79,163,0.3),
-      inset 0 0 30px rgba(255,255,255,0.1);
-    display: flex; align-items: center; justify-content: center;
-    position: relative;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-  }
-
-  .logo-circle:hover, .logo-circle:active {
-    transform: scale(1.08);
-    box-shadow:
-      0 0 60px rgba(168,85,247,0.9),
-      0 0 120px rgba(255,79,163,0.5),
-      inset 0 0 40px rgba(255,255,255,0.15);
-  }
-
-  .logo-inner {
-    width: 120px; height: 120px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 40% 40%, #ff4fa3, #7c3aed);
-    border: 3px solid rgba(255,255,255,0.3);
-    display: flex; align-items: center; justify-content: center;
-  }
-
-  .logo-text-big {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 38px;
-    font-weight: 700;
-    color: white;
-    letter-spacing: 2px;
-    text-shadow: 0 0 20px rgba(255,255,255,0.8);
-  }
-
-  .logo-sub {
-    font-size: 13px;
-    font-weight: 300;
-    color: rgba(240,230,255,0.6);
-    letter-spacing: 4px;
-    text-transform: uppercase;
-  }
-
-  .logo-hint {
-    font-size: 12px;
-    color: rgba(168,85,247,0.8);
-    letter-spacing: 2px;
-    animation: pulse-text 1.5s ease-in-out infinite;
-  }
-
-  @keyframes pulse-text {
-    0%, 100% { opacity: 0.5; }
-    50% { opacity: 1; }
-  }
-
-  /* ===== SONG SELECT SCREEN ===== */
-  #screen-songs {
-    background: linear-gradient(160deg, #0e001f 0%, #0a0010 100%);
-    flex-direction: column;
-    padding: 20px;
-    overflow: hidden;
-  }
-
-  .screen-header {
-    width: 100%;
-    max-width: 800px;
+  /* HUD – pasek górny */
+  #hud {
+    width: 900px;
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    margin-bottom: 16px;
-    flex-shrink: 0;
-  }
-
-  .back-btn {
-    background: rgba(168,85,247,0.15);
-    border: 1px solid rgba(168,85,247,0.3);
-    color: var(--purple);
-    padding: 8px 18px;
-    border-radius: 20px;
-    cursor: pointer;
-    font-family: 'Exo 2', sans-serif;
+    align-items: center;
+    padding: 10px 20px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
     font-size: 13px;
-    font-weight: 600;
-    transition: all 0.2s;
-  }
-  .back-btn:hover { background: rgba(168,85,247,0.3); }
-
-  .screen-title {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--pink);
-    letter-spacing: 3px;
-    text-transform: uppercase;
+    gap: 16px;
+    flex-wrap: wrap;
   }
 
-  .search-bar {
-    width: 100%;
-    max-width: 800px;
-    position: relative;
-    margin-bottom: 16px;
-    flex-shrink: 0;
-  }
+  .hud-block { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .hud-label { color: var(--dim); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; }
+  .hud-value { font-family: var(--display); font-size: 18px; color: var(--green); }
+  .hud-value.lives { color: var(--red); }
+  .hud-value.level { color: var(--cyan); }
 
-  .search-bar input {
-    width: 100%;
-    padding: 12px 48px 12px 18px;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(168,85,247,0.3);
-    border-radius: 30px;
-    color: var(--text);
-    font-family: 'Exo 2', sans-serif;
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
+  #health-bar-wrap {
+    flex: 1; min-width: 120px;
   }
-  .search-bar input:focus {
-    border-color: var(--purple);
-    box-shadow: 0 0 15px rgba(168,85,247,0.2);
-  }
-  .search-bar input::placeholder { color: rgba(240,230,255,0.3); }
-
-  .search-icon {
-    position: absolute;
-    right: 16px; top: 50%;
-    transform: translateY(-50%);
-    color: rgba(168,85,247,0.6);
-    font-size: 16px;
-    pointer-events: none;
-  }
-
-  .search-results-info {
-    font-size: 11px;
-    color: rgba(240,230,255,0.4);
-    text-align: center;
-    margin-bottom: 8px;
-    flex-shrink: 0;
-    height: 16px;
-  }
-
-  .songs-list {
-    width: 100%;
-    max-width: 800px;
-    overflow-y: auto;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding-right: 4px;
-    padding-bottom: 20px;
-  }
-
-  .songs-list::-webkit-scrollbar { width: 3px; }
-  .songs-list::-webkit-scrollbar-track { background: transparent; }
-  .songs-list::-webkit-scrollbar-thumb { background: rgba(168,85,247,0.4); border-radius: 2px; }
-
-  .song-card {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 14px;
-    padding: 14px 18px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    flex-shrink: 0;
-  }
-
-  .song-card:hover, .song-card:active {
-    background: rgba(168,85,247,0.12);
-    border-color: rgba(168,85,247,0.4);
-    transform: translateX(4px);
-  }
-
-  .song-card.external {
-    border-style: dashed;
-    border-color: rgba(34,211,238,0.3);
-  }
-  .song-card.external:hover {
-    background: rgba(34,211,238,0.08);
-    border-color: rgba(34,211,238,0.5);
-  }
-
-  .song-cover {
-    width: 52px; height: 52px;
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 22px;
-    flex-shrink: 0;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-  }
-
-  .song-info { flex: 1; min-width: 0; }
-
-  .song-title {
-    font-weight: 700;
-    font-size: 15px;
-    color: var(--text);
-    white-space: nowrap;
+  #health-bar {
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
     overflow: hidden;
-    text-overflow: ellipsis;
+    margin-top: 4px;
+  }
+  #health-fill {
+    height: 100%;
+    background: var(--green);
+    transition: width 0.2s, background 0.2s;
+    border-radius: 4px;
   }
 
-  .song-artist {
-    font-size: 12px;
-    color: rgba(240,230,255,0.5);
-    margin-top: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .song-meta {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 4px;
-    flex-shrink: 0;
-  }
-
-  .song-diff {
-    font-size: 11px;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 10px;
-    letter-spacing: 1px;
-  }
-  .diff-easy { background: rgba(74,247,255,0.15); color: var(--hit300); }
-  .diff-normal { background: rgba(160,255,128,0.15); color: var(--hit100); }
-  .diff-hard { background: rgba(255,79,163,0.15); color: var(--pink); }
-  .diff-insane { background: rgba(168,85,247,0.2); color: var(--purple); }
-
-  .song-bpm {
-    font-size: 11px;
-    color: rgba(240,230,255,0.35);
-  }
-
-  .download-badge {
-    font-size: 11px;
-    color: var(--cyan);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  /* ===== GAME SCREEN ===== */
-  #screen-game {
-    background: #05000e;
-    padding: 0;
-  }
-
+  /* Canvas */
   #game-canvas {
+    border: 1px solid var(--border);
+    display: block;
+    background: var(--bg);
+    cursor: crosshair;
+  }
+
+  /* Panel dolny – przyciski + podpowiedź */
+  #bottom-panel {
+    width: 900px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--dim);
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  #controls-hint span { color: var(--cyan); }
+
+  .btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 6px 14px;
+    cursor: pointer;
+    border-radius: 3px;
+    letter-spacing: 1px;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .btn:hover { border-color: var(--cyan); color: var(--cyan); }
+  .btn.primary { border-color: var(--green); color: var(--green); }
+  .btn.primary:hover { background: rgba(0,255,157,0.08); }
+
+  /* Ekrany nakładkowe */
+  .overlay {
     position: absolute;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    touch-action: none;
-    z-index: 5;
-  }
-
-  .game-hud {
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    z-index: 20;
-    padding: 12px 18px;
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    pointer-events: none;
-  }
-
-  .hud-score {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 32px;
-    font-weight: 700;
-    color: white;
-    text-shadow: 0 0 15px rgba(255,79,163,0.6);
-    letter-spacing: 2px;
-  }
-
-  .hud-combo {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 42px;
-    font-weight: 900;
-    color: var(--pink);
-    text-shadow: 0 0 20px rgba(255,79,163,0.8);
-    text-align: center;
-    line-height: 1;
-    transition: transform 0.1s ease;
-  }
-  .hud-combo.pop { animation: combo-pop 0.15s ease; }
-  @keyframes combo-pop {
-    0% { transform: scale(1.3); }
-    100% { transform: scale(1); }
-  }
-
-  .hud-combo-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: rgba(255,79,163,0.6);
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    text-align: center;
-  }
-
-  .hud-acc {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 20px;
-    font-weight: 600;
-    color: rgba(240,230,255,0.7);
-    text-align: right;
-  }
-
-  .progress-bar-wrap {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 4px;
-    background: rgba(255,255,255,0.08);
-    z-index: 20;
-  }
-
-  #progress-bar {
-    height: 100%;
-    background: linear-gradient(90deg, var(--purple), var(--pink));
-    width: 0%;
-    transition: width 0.1s linear;
-    box-shadow: 0 0 8px rgba(255,79,163,0.6);
-  }
-
-  .hit-feedback {
-    position: absolute;
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 28px;
-    font-weight: 900;
-    pointer-events: none;
-    z-index: 30;
-    animation: hit-float 0.7s ease forwards;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
-  }
-  @keyframes hit-float {
-    0% { transform: translateY(0) scale(1.2); opacity: 1; }
-    100% { transform: translateY(-50px) scale(0.8); opacity: 0; }
-  }
-
-  /* ===== RESULT SCREEN ===== */
-  #screen-result {
-    background: radial-gradient(ellipse at center, #1a0035 0%, #0A0010 70%);
     flex-direction: column;
-    gap: 16px;
-    padding: 30px;
-  }
-
-  .result-title {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 30px;
-    font-weight: 900;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    color: var(--pink);
-    text-shadow: 0 0 20px rgba(255,79,163,0.5);
-  }
-
-  .result-grade {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 100px;
-    font-weight: 900;
-    line-height: 1;
-    text-shadow: 0 0 40px currentColor;
-    animation: grade-in 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
-  }
-  @keyframes grade-in {
-    from { transform: scale(0.3) rotate(-20deg); opacity: 0; }
-    to { transform: scale(1) rotate(0deg); opacity: 1; }
-  }
-
-  .result-stats {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 20px;
-    padding: 24px 32px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px 32px;
-    width: 100%;
-    max-width: 400px;
-  }
-
-  .stat-item { text-align: center; }
-  .stat-val {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--text);
-  }
-  .stat-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: rgba(240,230,255,0.4);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-  }
-
-  .result-btns {
-    display: flex;
-    gap: 14px;
-    flex-wrap: wrap;
     justify-content: center;
+    align-items: center;
+    background: rgba(10,14,26,0.92);
+    gap: 18px;
+    z-index: 10;
+    pointer-events: all;
   }
+  .overlay.hidden { display: none; }
 
-  .btn-primary {
-    background: linear-gradient(135deg, var(--purple), var(--pink));
-    border: none;
-    color: white;
-    padding: 13px 28px;
-    border-radius: 30px;
-    font-family: 'Exo 2', sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    letter-spacing: 1px;
-    transition: transform 0.15s, box-shadow 0.15s;
-    box-shadow: 0 4px 20px rgba(168,85,247,0.4);
+  .overlay h1 {
+    font-family: var(--display);
+    font-size: 36px;
+    color: var(--green);
+    letter-spacing: 4px;
+    text-shadow: 0 0 24px rgba(0,255,157,0.5);
   }
-  .btn-primary:hover, .btn-primary:active {
-    transform: scale(1.05);
-    box-shadow: 0 6px 28px rgba(168,85,247,0.6);
-  }
-
-  .btn-secondary {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.15);
-    color: var(--text);
-    padding: 13px 28px;
-    border-radius: 30px;
-    font-family: 'Exo 2', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .btn-secondary:hover, .btn-secondary:active {
-    background: rgba(255,255,255,0.1);
-    border-color: rgba(255,255,255,0.25);
-  }
-
-  /* ===== COUNTDOWN ===== */
-  #countdown-overlay {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(5,0,14,0.85);
-    z-index: 50;
-    display: flex; align-items: center; justify-content: center;
-    flex-direction: column;
-    gap: 12px;
-  }
-  #countdown-overlay.hidden { display: none; }
-
-  .countdown-num {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 100px;
-    font-weight: 900;
-    color: white;
-    text-shadow: 0 0 40px rgba(168,85,247,0.8);
-    animation: countdown-pop 0.9s ease;
-  }
-  @keyframes countdown-pop {
-    0% { transform: scale(2); opacity: 0; }
-    30% { transform: scale(0.9); opacity: 1; }
-    100% { transform: scale(1); opacity: 1; }
-  }
-
-  .countdown-song {
-    font-size: 16px;
-    font-weight: 300;
-    color: rgba(240,230,255,0.6);
+  .overlay h2 {
+    font-family: var(--display);
+    font-size: 22px;
+    color: var(--cyan);
     letter-spacing: 2px;
   }
-
-  /* ===== APPROACH RING ===== */
-  .approach-ring {
-    position: absolute;
-    border-radius: 50%;
-    border: 3px solid rgba(255,255,255,0.7);
-    pointer-events: none;
-    z-index: 8;
+  .overlay p {
+    font-size: 14px;
+    color: var(--text);
+    text-align: center;
+    max-width: 420px;
+    line-height: 1.7;
+  }
+  .overlay .score-big {
+    font-family: var(--display);
+    font-size: 48px;
+    color: var(--yellow);
+    text-shadow: 0 0 20px rgba(255,224,102,0.5);
   }
 
-  /* ===== TOAST NOTIF ===== */
-  #toast {
-    position: fixed;
-    bottom: 80px;
+  #tip-box {
+    position: absolute;
+    bottom: 8px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(168,85,247,0.9);
-    color: white;
-    padding: 10px 24px;
-    border-radius: 20px;
+    background: rgba(15,22,41,0.95);
+    border: 1px solid var(--cyan);
+    border-radius: 4px;
+    padding: 8px 16px;
     font-size: 13px;
-    font-weight: 600;
-    z-index: 100;
+    color: var(--cyan);
+    pointer-events: none;
     opacity: 0;
     transition: opacity 0.3s;
     white-space: nowrap;
-    pointer-events: none;
+    z-index: 20;
+    max-width: 96%;
+    text-align: center;
   }
-  #toast.show { opacity: 1; }
+  #tip-box.visible { opacity: 1; }
 
-  /* ===== MOBILE adjustments ===== */
-  @media (max-width: 480px) {
-    .logo-circle { width: 130px; height: 130px; }
-    .logo-inner { width: 98px; height: 98px; }
-    .logo-text-big { font-size: 30px; }
-    .hud-score { font-size: 22px; }
-    .hud-combo { font-size: 32px; }
-    .result-stats { padding: 18px 20px; gap: 12px 20px; }
-    .stat-val { font-size: 22px; }
-    .result-grade { font-size: 80px; }
+  /* Kontener całości */
+  #game-wrap {
+    position: relative;
+    width: 900px;
   }
 </style>
 </head>
 <body>
 
-<canvas id="bg-canvas"></canvas>
-
-<!-- MENU -->
-<div class="screen" id="screen-menu">
-  <div class="logo-wrap" id="logo-btn">
-    <div class="logo-circle" id="logo-circle">
-      <div class="logo-inner">
-        <span class="logo-text-big">RC!</span>
-      </div>
-    </div>
-    <div class="logo-sub">RhythmClick!</div>
-    <div class="logo-hint">✦ KLIKNIJ ABY GRAĆ ✦</div>
+<!-- =============================================
+     1. INTERFEJS UŻYTKOWNIKA – HTML
+     ============================================= -->
+<div id="hud">
+  <div class="hud-block">
+    <span class="hud-label">Punkty</span>
+    <span class="hud-value" id="score-display">0</span>
+  </div>
+  <div class="hud-block">
+    <span class="hud-label">Poziom</span>
+    <span class="hud-value level" id="level-display">1</span>
+  </div>
+  <div class="hud-block health-bar-wrap" id="health-bar-wrap">
+    <span class="hud-label">Energia</span>
+    <div id="health-bar"><div id="health-fill" style="width:100%"></div></div>
+  </div>
+  <div class="hud-block">
+    <span class="hud-label">Życia</span>
+    <span class="hud-value lives" id="lives-display">♥ ♥ ♥</span>
+  </div>
+  <div class="hud-block">
+    <span class="hud-label">Combo</span>
+    <span class="hud-value" id="combo-display">x1</span>
+  </div>
+  <div class="hud-block">
+    <span class="hud-label">Czas</span>
+    <span class="hud-value" id="timer-display">60</span>
   </div>
 </div>
 
-<!-- SONG SELECT -->
-<div class="screen hidden" id="screen-songs">
-  <div class="screen-header">
-    <button class="back-btn" id="btn-back-menu">← Wróć</button>
-    <div class="screen-title">Wybierz Utwór</div>
-    <div style="width:80px"></div>
+<div id="game-wrap">
+  <canvas id="game-canvas" width="900" height="500"></canvas>
+
+  <!-- Ekran startowy -->
+  <div class="overlay" id="screen-start">
+    <h1>&lt;CodeRunner/&gt;</h1>
+    <p>Zbieraj <span style="color:var(--green)">tokeny kodu</span> i unikaj <span style="color:var(--red)">bugów</span>.<br>
+       Skocz na buga, żeby go pokonać. Zbierz <span style="color:var(--yellow)">złote tokeny</span> dla combo bonusu.<br>
+       Każdy zebrany token pokazuje wskazówkę programistyczną!</p>
+    <button class="btn primary" id="btn-start">▶ START GRY</button>
+    <p style="font-size:11px;color:var(--dim)">← → lub A/D — ruch &nbsp;|&nbsp; ↑ / W / Spacja — skok &nbsp;|&nbsp; Klik — strzał debuggera</p>
   </div>
-  <div class="search-bar">
-    <input type="text" id="search-input" placeholder="🔍  Szukaj lub wpisz tytuł do pobrania...">
-    <span class="search-icon">↵</span>
+
+  <!-- Ekran pauzy -->
+  <div class="overlay hidden" id="screen-pause">
+    <h2>// PAUZA</h2>
+    <button class="btn primary" id="btn-resume">▶ KONTYNUUJ</button>
+    <button class="btn" id="btn-restart-pause">↺ RESTART</button>
   </div>
-  <div class="search-results-info" id="search-info"></div>
-  <div class="songs-list" id="songs-list"></div>
+
+  <!-- Ekran końca gry -->
+  <div class="overlay hidden" id="screen-gameover">
+    <h2>GAME OVER</h2>
+    <div class="score-big" id="final-score">0</div>
+    <p id="final-msg"></p>
+    <button class="btn primary" id="btn-restart">↺ ZAGRAJ PONOWNIE</button>
+  </div>
+
+  <!-- Ekran przejścia poziomu -->
+  <div class="overlay hidden" id="screen-levelup">
+    <h2 id="levelup-title">POZIOM 2</h2>
+    <p id="levelup-tip"></p>
+    <button class="btn primary" id="btn-next-level">▶ DALEJ</button>
+  </div>
+
+  <!-- Dymek z podpowiedzią programistyczną -->
+  <div id="tip-box"></div>
 </div>
 
-<!-- GAME SCREEN -->
-<div class="screen hidden" id="screen-game">
-  <div class="game-hud">
-    <div>
-      <div class="hud-score" id="hud-score">000000</div>
-    </div>
-    <div style="text-align:center">
-      <div class="hud-combo" id="hud-combo">0</div>
-      <div class="hud-combo-label">COMBO</div>
-    </div>
-    <div>
-      <div class="hud-acc" id="hud-acc">100.00%</div>
-    </div>
+<div id="bottom-panel">
+  <div id="controls-hint">
+    <span>←→</span> ruch &nbsp; <span>↑/Spacja</span> skok &nbsp; <span>Klik</span> strzał &nbsp; <span>P</span> pauza
   </div>
-  <canvas id="game-canvas"></canvas>
-  <div class="progress-bar-wrap"><div id="progress-bar"></div></div>
-  <div id="countdown-overlay">
-    <div class="countdown-num" id="countdown-num">3</div>
-    <div class="countdown-song" id="countdown-song"></div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn" id="btn-pause-hud">⏸ Pauza</button>
+    <button class="btn" id="btn-restart-hud">↺ Restart</button>
   </div>
 </div>
-
-<!-- RESULTS -->
-<div class="screen hidden" id="screen-result">
-  <div class="result-title" id="result-title">WYNIKI</div>
-  <div class="result-grade" id="result-grade">A</div>
-  <div class="result-stats">
-    <div class="stat-item"><div class="stat-val" id="res-score">0</div><div class="stat-label">Wynik</div></div>
-    <div class="stat-item"><div class="stat-val" id="res-acc">0%</div><div class="stat-label">Celność</div></div>
-    <div class="stat-item"><div class="stat-val" id="res-300">0</div><div class="stat-label">300s</div></div>
-    <div class="stat-item"><div class="stat-val" id="res-100">0</div><div class="stat-label">100s</div></div>
-    <div class="stat-item"><div class="stat-val" id="res-50">0</div><div class="stat-label">50s</div></div>
-    <div class="stat-item"><div class="stat-val" id="res-miss">0</div><div class="stat-label">Missy</div></div>
-    <div class="stat-item" style="grid-column:1/-1"><div class="stat-val" id="res-combo">0x</div><div class="stat-label">Max Combo</div></div>
-  </div>
-  <div class="result-btns">
-    <button class="btn-primary" id="btn-retry">↺ Spróbuj ponownie</button>
-    <button class="btn-secondary" id="btn-songs">♪ Lista piosenek</button>
-  </div>
-</div>
-
-<div id="toast">Pobrano utwór!</div>
 
 <script>
-// ============================================================
-// BACKGROUND PARTICLES
-// ============================================================
-(function() {
-  const canvas = document.getElementById('bg-canvas');
-  const ctx = canvas.getContext('2d');
-  let W, H, stars = [];
+"use strict";
 
-  function resize() {
-    W = canvas.width = window.innerWidth;
-    H = canvas.height = window.innerHeight;
-  }
+/* =============================================
+   STAŁE I DANE GRY
+   ============================================= */
 
-  function initStars() {
-    stars = [];
-    for (let i = 0; i < 120; i++) {
-      stars.push({
-        x: Math.random() * W,
-        y: Math.random() * H,
-        r: Math.random() * 1.5 + 0.2,
-        a: Math.random(),
-        da: (Math.random() - 0.5) * 0.005,
-        dx: (Math.random() - 0.5) * 0.15,
-        dy: (Math.random() - 0.5) * 0.15,
-        color: Math.random() < 0.3 ? '#a855f7' : Math.random() < 0.5 ? '#ff4fa3' : '#ffffff'
-      });
-    }
-  }
-
-  function drawStars() {
-    ctx.clearRect(0, 0, W, H);
-    for (const s of stars) {
-      s.a += s.da;
-      if (s.a <= 0 || s.a >= 1) s.da *= -1;
-      s.x += s.dx; s.y += s.dy;
-      if (s.x < 0) s.x = W; if (s.x > W) s.x = 0;
-      if (s.y < 0) s.y = H; if (s.y > H) s.y = 0;
-      ctx.globalAlpha = s.a * 0.7;
-      ctx.fillStyle = s.color;
-      ctx.beginPath();
-      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-    requestAnimationFrame(drawStars);
-  }
-
-  window.addEventListener('resize', () => { resize(); initStars(); });
-  resize(); initStars(); drawStars();
-})();
-
-// ============================================================
-// SONGS DATA
-// ============================================================
-const SONGS = [
-  { id: 1, title: "Neon Hearts", artist: "ZARA NOVA", bpm: 128, diff: "Normal", diffClass: "diff-normal", emoji: "💜", color: "#a855f7" },
-  { id: 2, title: "Summer Crash", artist: "THE LUMINARY", bpm: 140, diff: "Hard", diffClass: "diff-hard", emoji: "🌊", color: "#22d3ee" },
-  { id: 3, title: "Glow Up", artist: "STELLARWAVE", bpm: 115, diff: "Easy", diffClass: "diff-easy", emoji: "✨", color: "#4af7ff" },
-  { id: 4, title: "Midnight Drive", artist: "KASSIA REY", bpm: 135, diff: "Hard", diffClass: "diff-hard", emoji: "🌙", color: "#ff4fa3" },
-  { id: 5, title: "Electric Feel '26", artist: "CHROMATIC", bpm: 150, diff: "Insane", diffClass: "diff-insane", emoji: "⚡", color: "#ffdd55" },
-  { id: 6, title: "Cloud Nine", artist: "PASTEL DREAM", bpm: 110, diff: "Easy", diffClass: "diff-easy", emoji: "☁️", color: "#a0ff80" },
-  { id: 7, title: "Retrograde Vibes", artist: "LUNA ECHO", bpm: 122, diff: "Normal", diffClass: "diff-normal", emoji: "🔮", color: "#a855f7" },
-  { id: 8, title: "Hypnotic", artist: "NOVAXIA", bpm: 145, diff: "Insane", diffClass: "diff-insane", emoji: "🌀", color: "#ff4fa3" },
+/** Wskazówki programistyczne przypisane do tokenów */
+const CODE_TIPS = [
+  { symbol: "fn()",  color: "#00ff9d",  tip: "Funkcja (fn) to blok kodu wielokrotnego użytku — deklaruj ją raz, wywołuj wiele razy!" },
+  { symbol: "var",   color: "#00e5ff",  tip: "Zmienne (var/let/const) przechowują dane. Preferuj 'const', gdy wartość się nie zmienia." },
+  { symbol: "[]",    color: "#b388ff",  tip: "Tablica (Array) przechowuje wiele wartości pod jednym indeksem. Indeksy zaczynają się od 0!" },
+  { symbol: "{}",    color: "#ffab40",  tip: "Obiekt (Object) grupuje powiązane dane jako pary klucz–wartość." },
+  { symbol: "if",    color: "#69f0ae",  tip: "Instrukcja warunkowa 'if/else' kieruje przepływem programu na podstawie warunków." },
+  { symbol: "for",   color: "#40c4ff",  tip: "Pętla 'for' powtarza blok kodu określoną liczbę razy. Uwaga na nieskończone pętle!" },
+  { symbol: "===",   color: "#ffe066",  tip: "'===' porównuje wartość I typ. Zawsze preferuj je nad '==' w JavaScript." },
+  { symbol: "=>",    color: "#ff80ab",  tip: "Arrow function (=>) to skrócona składnia funkcji. Nie tworzy własnego 'this'." },
+  { symbol: "try",   color: "#80d8ff",  tip: "Blok try/catch przechwytuje błędy i zapobiega zatrzymaniu programu." },
+  { symbol: "O(n)",  color: "#ccff90",  tip: "Złożoność O(n) oznacza czas liniowy — wraz z n rośnie czas wykonania algorytmu." },
 ];
 
-let downloadedSongs = [...SONGS];
-let currentSong = null;
+const BUG_TYPES = [
+  { name: "NullRef",    color: "#ff3a5c", speed: 1.2, pts: 20 },
+  { name: "StackOvfl",  color: "#ff7043", speed: 1.6, pts: 30 },
+  { name: "InfLoop",    color: "#ab47bc", speed: 0.8, pts: 15 },
+];
 
-// ============================================================
-// GAME STATE
-// ============================================================
-let gameState = {
-  circles: [],
-  score: 0,
-  combo: 0,
-  maxCombo: 0,
-  hits300: 0, hits100: 0, hits50: 0, misses: 0,
-  totalNotes: 0,
-  active: false,
-  startTime: 0,
-  songDuration: 0,
-  animFrame: null
-};
+const GRAVITY     = 0.55;
+const JUMP_FORCE  = -13;
+const MOVE_SPEED  = 4.5;
+const BULLET_SPEED = 10;
+const GROUND_Y    = 440;  // y górnej krawędzi ziemi (canvas h=500, ziemia ma h=60)
 
-// ============================================================
-// SCREEN MANAGER
-// ============================================================
-const screens = {
-  menu: document.getElementById('screen-menu'),
-  songs: document.getElementById('screen-songs'),
-  game: document.getElementById('screen-game'),
-  result: document.getElementById('screen-result'),
-};
+/* =============================================
+   STAN GRY
+   ============================================= */
+let canvas, ctx;
 
-function showScreen(name) {
-  Object.values(screens).forEach(s => s.classList.add('hidden'));
-  screens[name].classList.remove('hidden');
+let state = {};          // główny stan — inicjowany w resetGame()
+
+/* =============================================
+   2. OBSŁUGA ZDARZEŃ – słownik klawiszy
+   ============================================= */
+
+/** Obiekt przechowujący aktualny stan wciśniętych klawiszy.
+ *  Klucze: nazwa klawisza (np. "ArrowLeft"), wartość: true/false.
+ *  Umożliwia płynne wieloklawiszowe sterowanie bez event-driven ruchu. */
+const keys = {};
+
+/* =============================================
+   INICJALIZACJA
+   ============================================= */
+
+/**
+ * init()
+ * ──────
+ * Cel: Punkt wejścia gry. Pobiera referencje do elementów DOM, rejestruje
+ *      wszystkie nasłuchiwacze zdarzeń i wyświetla ekran startowy.
+ * Kiedy wywoływana: Raz, po załadowaniu DOM (DOMContentLoaded).
+ * Argumenty: brak
+ * Zwraca: void
+ * Współpracuje z: setupEventListeners(), resetGame()
+ */
+function init() {
+  canvas = document.getElementById("game-canvas");
+  ctx    = canvas.getContext("2d");
+  setupEventListeners();
+  // Pętla renderująca uruchamia się od razu, ale gra jest w stanie "menu"
+  resetGame(false);
+  requestAnimationFrame(gameLoop);
 }
 
-// ============================================================
-// MENU
-// ============================================================
-document.getElementById('logo-btn').addEventListener('click', () => {
-  showScreen('songs');
-  renderSongs(downloadedSongs);
-});
+/* =============================================
+   2. OBSŁUGA ZDARZEŃ
+   ============================================= */
 
-document.getElementById('btn-back-menu').addEventListener('click', () => showScreen('menu'));
+/**
+ * setupEventListeners()
+ * ─────────────────────
+ * Cel: Rejestruje wszystkie zdarzenia klawiatury, myszy i przycisków UI.
+ *      Centralizuje obsługę wejścia — żaden inny fragment kodu nie dodaje listenerów.
+ * Kiedy wywoływana: Raz przez init().
+ * Argumenty: brak
+ * Zwraca: void
+ * Współpracuje z: keys{}, handleShoot(), togglePause(), resetGame()
+ */
+function setupEventListeners() {
+  // --- Klawiatura: naciśnięcie ---
+  window.addEventListener("keydown", (e) => {
+    keys[e.code] = true;
 
-// ============================================================
-// SONG LIST
-// ============================================================
-function renderSongs(list, query = '') {
-  const container = document.getElementById('songs-list');
-  const info = document.getElementById('search-info');
-  container.innerHTML = '';
-
-  if (query && list.length === 0) {
-    // Show add option
-    const addCard = document.createElement('div');
-    addCard.className = 'song-card external';
-    addCard.innerHTML = `
-      <div class="song-cover" style="background:linear-gradient(135deg,#22d3ee22,#22d3ee44);color:#22d3ee;font-size:26px;">⬇</div>
-      <div class="song-info">
-        <div class="song-title">${escHtml(query)}</div>
-        <div class="song-artist">Kliknij aby pobrać i dodać do listy</div>
-      </div>
-      <div class="download-badge">⬇ Pobierz</div>
-    `;
-    addCard.addEventListener('click', () => downloadSong(query));
-    container.appendChild(addCard);
-    info.textContent = 'Nie znaleziono — możesz pobrać ten utwór';
-    return;
-  }
-
-  if (query) info.textContent = `Znaleziono: ${list.length} utwór(ów)`;
-  else info.textContent = '';
-
-  list.forEach(song => {
-    const card = document.createElement('div');
-    card.className = 'song-card' + (song.external ? ' external' : '');
-    card.innerHTML = `
-      <div class="song-cover" style="background:linear-gradient(135deg,${song.color}33,${song.color}66)">${song.emoji || '🎵'}</div>
-      <div class="song-info">
-        <div class="song-title">${escHtml(song.title)}</div>
-        <div class="song-artist">${escHtml(song.artist)}</div>
-      </div>
-      <div class="song-meta">
-        <span class="song-diff ${song.diffClass}">${song.diff}</span>
-        <span class="song-bpm">${song.bpm} BPM</span>
-      </div>
-    `;
-    card.addEventListener('click', () => selectSong(song));
-    container.appendChild(card);
+    // Skok (jednorazowy impuls)
+    if (["ArrowUp","KeyW","Space"].includes(e.code)) {
+      e.preventDefault();
+      tryJump();
+    }
+    // Pauza
+    if (e.code === "KeyP") togglePause();
+    // Blokada przewijania strony spacją/strzałkami
+    if (["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.code)) {
+      e.preventDefault();
+    }
   });
+
+  // --- Klawiatura: puszczenie ---
+  window.addEventListener("keyup", (e) => {
+    keys[e.code] = false;
+  });
+
+  // --- Mysz: kliknięcie (strzał debuggera) ---
+  canvas.addEventListener("click", (e) => {
+    if (!state.running || state.paused) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx   = (e.clientX - rect.left) * (canvas.width  / rect.width);
+    const my   = (e.clientY - rect.top)  * (canvas.height / rect.height);
+    handleShoot(mx, my);
+  });
+
+  // --- Przyciski UI ---
+  document.getElementById("btn-start")       .addEventListener("click", () => startGame());
+  document.getElementById("btn-resume")      .addEventListener("click", () => togglePause());
+  document.getElementById("btn-restart-pause").addEventListener("click", () => { hideAllScreens(); resetGame(true); });
+  document.getElementById("btn-restart")     .addEventListener("click", () => { hideAllScreens(); resetGame(true); });
+  document.getElementById("btn-next-level")  .addEventListener("click", () => { hideAllScreens(); nextLevel(); });
+  document.getElementById("btn-pause-hud")   .addEventListener("click", () => togglePause());
+  document.getElementById("btn-restart-hud") .addEventListener("click", () => { hideAllScreens(); resetGame(true); });
 }
 
-function escHtml(str) {
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-// Search
-const searchInput = document.getElementById('search-input');
-searchInput.addEventListener('input', () => {
-  const q = searchInput.value.trim().toLowerCase();
-  if (!q) { renderSongs(downloadedSongs); return; }
-  const found = downloadedSongs.filter(s =>
-    s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q)
-  );
-  renderSongs(found, q);
-});
-
-searchInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter') {
-    const q = searchInput.value.trim();
-    const found = downloadedSongs.filter(s =>
-      s.title.toLowerCase().includes(q.toLowerCase()) || s.artist.toLowerCase().includes(q.toLowerCase())
-    );
-    if (found.length === 0 && q) downloadSong(q);
+/**
+ * tryJump()
+ * ─────────
+ * Cel: Sprawdza, czy gracz może skoczyć (jest na ziemi lub platformie)
+ *      i jeśli tak – nadaje pionową prędkość.
+ * Kiedy wywoływana: Na zdarzeniu keydown dla klawiszy skoku.
+ * Argumenty: brak
+ * Zwraca: void
+ * Współpracuje z: state.player, JUMP_FORCE, GRAVITY
+ */
+function tryJump() {
+  if (!state.running || state.paused) return;
+  if (state.player.onGround) {
+    state.player.vy     = JUMP_FORCE;
+    state.player.onGround = false;
+    spawnParticles(state.player.x + state.player.w/2,
+                   state.player.y + state.player.h, "#00ff9d", 6);
   }
-});
+}
 
-function downloadSong(title) {
-  const bpms = [110, 120, 128, 130, 135, 140, 145, 150];
-  const diffs = [
-    { diff: 'Easy', diffClass: 'diff-easy' },
-    { diff: 'Normal', diffClass: 'diff-normal' },
-    { diff: 'Hard', diffClass: 'diff-hard' },
-    { diff: 'Insane', diffClass: 'diff-insane' },
-  ];
-  const emojis = ['🎵','🎤','🎸','🎹','🎺','🥁','🎻','🎷','🎼','🌟'];
-  const colors = ['#ff4fa3','#a855f7','#22d3ee','#4af7ff','#ffdd55','#a0ff80'];
-  const artists = ['NOVA ARTIST', 'STARLIGHT', 'COSMIC BEATS', 'WAVE RIDER', 'ULTRAVIOLET'];
-  const d = diffs[Math.floor(Math.random() * diffs.length)];
-  const newSong = {
-    id: Date.now(),
-    title: title,
-    artist: artists[Math.floor(Math.random() * artists.length)],
-    bpm: bpms[Math.floor(Math.random() * bpms.length)],
-    ...d,
-    emoji: emojis[Math.floor(Math.random() * emojis.length)],
-    color: colors[Math.floor(Math.random() * colors.length)],
-    external: true
+/**
+ * handleShoot(mx, my)
+ * ───────────────────
+ * Cel: Tworzy pocisk (bullet) wystrzelony przez gracza w kierunku kursora myszy.
+ * Kiedy wywoływana: Na kliknięciu canvas, gdy gra jest aktywna.
+ * Argumenty:
+ *   mx {number} – pozycja X kliknięcia w układzie canvas
+ *   my {number} – pozycja Y kliknięcia w układzie canvas
+ * Zwraca: void
+ * Współpracuje z: state.bullets, state.player, calcAngle()
+ */
+function handleShoot(mx, my) {
+  if (state.shootCooldown > 0) return;
+  const p   = state.player;
+  const cx  = p.x + p.w / 2;
+  const cy  = p.y + p.h / 2;
+  const ang = Math.atan2(my - cy, mx - cx);
+  state.bullets.push({
+    x:  cx, y: cy,
+    vx: Math.cos(ang) * BULLET_SPEED,
+    vy: Math.sin(ang) * BULLET_SPEED,
+    r:  5, life: 80
+  });
+  state.shootCooldown = 22; // klatki cooldownu
+}
+
+/* =============================================
+   ZARZĄDZANIE GRĄ
+   ============================================= */
+
+/**
+ * resetGame(autoStart)
+ * ────────────────────
+ * Cel: Resetuje cały stan gry do wartości początkowych (poziom 1).
+ *      Opcjonalnie od razu uruchamia rozgrywkę.
+ * Kiedy wywoływana: Na starcie, restarcie i po utracie wszystkich żyć.
+ * Argumenty:
+ *   autoStart {boolean} – jeśli true, gra startuje natychmiast
+ * Zwraca: void
+ * Współpracuje z: createPlayer(), buildLevel(), state
+ */
+function resetGame(autoStart) {
+  state = {
+    running:       false,
+    paused:        false,
+    level:         1,
+    score:         0,
+    lives:         3,
+    combo:         1,
+    comboTimer:    0,
+    timeLeft:      60,
+    timeAccum:     0,
+    player:        createPlayer(),
+    platforms:     [],
+    tokens:        [],
+    bugs:          [],
+    bullets:       [],
+    particles:     [],
+    floatingTexts: [],
+    bgStars:       generateStars(80),
+    shootCooldown: 0,
+    invincible:    0,   // klatki nietykalności po otrzymaniu obrażeń
+    tokensNeeded:  5,   // ile tokenów do przejścia poziomu
+    tokensCollected: 0,
   };
-  downloadedSongs.push(newSong);
-  searchInput.value = '';
-  renderSongs(downloadedSongs);
-  showToast(`✓ Pobrano: ${title}`);
-}
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
-}
-
-// ============================================================
-// SONG SELECT → COUNTDOWN → GAME
-// ============================================================
-function selectSong(song) {
-  currentSong = song;
-  showScreen('game');
-  startCountdown(song);
-}
-
-function startCountdown(song) {
-  const overlay = document.getElementById('countdown-overlay');
-  const numEl = document.getElementById('countdown-num');
-  const songEl = document.getElementById('countdown-song');
-  overlay.classList.remove('hidden');
-  songEl.textContent = `${song.title} — ${song.artist}`;
-
-  let n = 3;
-  numEl.textContent = n;
-
-  const tick = setInterval(() => {
-    n--;
-    if (n <= 0) {
-      clearInterval(tick);
-      numEl.textContent = 'GO!';
-      setTimeout(() => {
-        overlay.classList.add('hidden');
-        startGame(song);
-      }, 700);
-    } else {
-      numEl.textContent = n;
-      numEl.style.animation = 'none';
-      void numEl.offsetWidth;
-      numEl.style.animation = 'countdown-pop 0.9s ease';
-    }
-  }, 900);
-}
-
-// ============================================================
-// GAME ENGINE
-// ============================================================
-const gameCanvas = document.getElementById('game-canvas');
-const gCtx = gameCanvas.getContext('2d');
-let GW, GH;
-
-function resizeGameCanvas() {
-  GW = gameCanvas.width = gameCanvas.offsetWidth;
-  GH = gameCanvas.height = gameCanvas.offsetHeight;
-}
-
-window.addEventListener('resize', resizeGameCanvas);
-
-function generateBeatmap(song) {
-  // Generate notes based on BPM
-  const beatInterval = 60000 / song.bpm; // ms per beat
-  const totalDuration = 60000; // 60 second game
-  const notes = [];
-  const diffMult = { 'Easy': 0.5, 'Normal': 0.75, 'Hard': 1.0, 'Insane': 1.3 };
-  const mult = diffMult[song.diff] || 1.0;
-  const minInterval = beatInterval / mult;
-  const circleR = Math.min(GW, GH) * 0.055;
-  const margin = circleR * 2.5;
-
-  let t = 2000; // start at 2s
-  let noteIdx = 0;
-
-  // Patterns
-  const patterns = [
-    [0], [0, 0.5], [0, 0.33, 0.66], [0, 0.25, 0.5, 0.75],
-    [0, 0.5, 1.0], [0, 0.75]
-  ];
-
-  while (t < totalDuration - 2000) {
-    const pat = patterns[Math.floor(Math.random() * patterns.length)];
-    for (const offset of pat) {
-      const noteTime = t + offset * minInterval;
-      if (noteTime > totalDuration - 1500) break;
-      notes.push({
-        id: noteIdx++,
-        x: margin + Math.random() * (GW - margin * 2),
-        y: margin + Math.random() * (GH - margin * 2),
-        time: noteTime,
-        duration: 800 - (mult * 100), // approach time
-        radius: circleR,
-        hit: false,
-        missed: false,
-        hitResult: null,
-        hitTime: null,
-        alpha: 1,
-        number: noteIdx
-      });
-    }
-    t += minInterval * (0.8 + Math.random() * 0.4);
-  }
-  return { notes, duration: totalDuration };
-}
-
-function startGame(song) {
-  resizeGameCanvas();
-  const { notes, duration } = generateBeatmap(song);
-  gameState = {
-    circles: notes,
-    score: 0, combo: 0, maxCombo: 0,
-    hits300: 0, hits100: 0, hits50: 0, misses: 0,
-    totalNotes: notes.length,
-    active: true,
-    startTime: performance.now(),
-    songDuration: duration,
-    animFrame: null,
-    noteIdx: 0
-  };
+  buildLevel(state.level);
   updateHUD();
-  if (gameState.animFrame) cancelAnimationFrame(gameState.animFrame);
-  gameLoop();
+  if (autoStart) {
+    state.running = true;
+  }
 }
 
-function gameLoop() {
-  if (!gameState.active) return;
-  const now = performance.now();
-  const elapsed = now - gameState.startTime;
+/**
+ * startGame()
+ * ───────────
+ * Cel: Ukrywa ekran startowy i rozpoczyna właściwą rozgrywkę.
+ * Kiedy wywoływana: Klik przycisku "START GRY".
+ * Argumenty: brak
+ * Zwraca: void
+ */
+function startGame() {
+  hideAllScreens();
+  state.running = true;
+}
 
-  gCtx.clearRect(0, 0, GW, GH);
+/**
+ * nextLevel()
+ * ───────────
+ * Cel: Podnosi numer poziomu, zwiększa trudność, przebudowuje scenę.
+ * Kiedy wywoływana: Po zebraniu wymaganej liczby tokenów (handleTokenCollection).
+ * Argumenty: brak
+ * Zwraca: void
+ * Współpracuje z: buildLevel(), state.level, updateHUD()
+ */
+function nextLevel() {
+  state.level++;
+  state.timeLeft       = 60 + state.level * 5;
+  state.timeAccum      = 0;
+  state.tokensNeeded   = 5 + state.level;
+  state.tokensCollected = 0;
+  state.player         = createPlayer();
+  state.bullets        = [];
+  state.particles      = [];
+  state.floatingTexts  = [];
+  buildLevel(state.level);
+  updateHUD();
+  state.running = true;
+}
 
-  // Draw subtle grid/glow
-  drawBackground();
+/**
+ * togglePause()
+ * ─────────────
+ * Cel: Przełącza stan pauzy gry.
+ * Kiedy wywoływana: Klawisz P lub przycisk pauzy.
+ * Argumenty: brak
+ * Zwraca: void
+ * Współpracuje z: state.paused, showScreen()
+ */
+function togglePause() {
+  if (!state.running) return;
+  state.paused = !state.paused;
+  if (state.paused) showScreen("screen-pause");
+  else               hideAllScreens();
+}
 
-  // Check for missed notes
-  const missWindow = 400;
-  for (const c of gameState.circles) {
-    if (!c.hit && !c.missed && elapsed > c.time + missWindow) {
-      c.missed = true;
-      gameState.misses++;
-      gameState.combo = 0;
-      updateHUD();
-      spawnHitFeedback(c.x, c.y, 'MISS', '#ff4444');
-    }
+/* =============================================
+   3. SCENA GRY – platformy i tło
+   ============================================= */
+
+/**
+ * buildLevel(lvl)
+ * ───────────────
+ * Cel: Generuje układy platform i tokeny dla danego poziomu.
+ *      Trudność rośnie: więcej platform, szybsze bugi, więcej bugów.
+ * Kiedy wywoływana: resetGame() i nextLevel().
+ * Argumenty:
+ *   lvl {number} – numer aktualnego poziomu
+ * Zwraca: void
+ * Współpracuje z: state.platforms, state.tokens, state.bugs, spawnBugs()
+ */
+function buildLevel(lvl) {
+  // Stałe platformy (ziemia jest rysowana osobno)
+  const layouts = [
+    // Poziom 1 – prosty układ
+    [
+      { x: 100, y: 350, w: 140 },
+      { x: 320, y: 290, w: 120 },
+      { x: 520, y: 340, w: 160 },
+      { x: 700, y: 260, w: 130 },
+    ],
+    // Poziom 2 – wyższe platformy
+    [
+      { x:  60, y: 320, w: 110 },
+      { x: 240, y: 260, w: 100 },
+      { x: 420, y: 200, w: 120 },
+      { x: 620, y: 290, w: 100 },
+      { x: 760, y: 220, w: 110 },
+    ],
+    // Poziom 3+
+    [
+      { x:  50, y: 300, w: 90  },
+      { x: 200, y: 230, w: 90  },
+      { x: 360, y: 170, w: 100 },
+      { x: 530, y: 230, w: 90  },
+      { x: 690, y: 160, w: 90  },
+      { x: 800, y: 280, w: 80  },
+    ],
+  ];
+
+  const layout = layouts[Math.min(lvl - 1, layouts.length - 1)];
+  state.platforms = layout.map(p => ({ ...p, h: 16 }));
+
+  // Tokeny na platformach i na ziemi
+  state.tokens = [];
+  // Na ziemi
+  for (let i = 0; i < 4; i++) {
+    state.tokens.push(createToken(80 + i * 200, GROUND_Y - 28));
   }
-
-  // Draw circles (back to front by time)
-  const visible = gameState.circles.filter(c => {
-    const dt = elapsed - c.time;
-    return !c.missed && (c.hit ? (dt < 700) : (dt > -c.duration - 100 && dt < 500));
+  // Na platformach
+  state.platforms.forEach(pl => {
+    state.tokens.push(createToken(pl.x + pl.w/2 - 12, pl.y - 30));
   });
+  // Jeden złoty (bonus combo)
+  const gi = Math.floor(Math.random() * state.tokens.length);
+  state.tokens[gi].gold   = true;
+  state.tokens[gi].color  = "#ffe066";
+  state.tokens[gi].symbol = "★";
 
-  // Sort: earlier = bigger approach ring = draw first
-  visible.sort((a, b) => b.time - a.time);
+  // Bugi
+  state.bugs = [];
+  spawnBugs(2 + lvl);
+}
 
-  for (const c of visible) {
-    const dt = elapsed - c.time; // negative = not yet
-    if (c.hit) {
-      drawHitCircle(c, dt);
+/**
+ * generateStars(count)
+ * ────────────────────
+ * Cel: Generuje tablicę losowych gwiazd (obiektów {x,y,r,a}) dla tła.
+ * Kiedy wywoływana: resetGame().
+ * Argumenty:
+ *   count {number} – liczba gwiazd
+ * Zwraca: {Array} – tablica obiektów gwiazd
+ */
+function generateStars(count) {
+  const stars = [];
+  for (let i = 0; i < count; i++) {
+    stars.push({
+      x: Math.random() * 900,
+      y: Math.random() * GROUND_Y,
+      r: Math.random() * 1.4 + 0.3,
+      a: Math.random() * 0.6 + 0.2,
+    });
+  }
+  return stars;
+}
+
+/* =============================================
+   4. OBIEKTY GRY
+   ============================================= */
+
+/**
+ * createPlayer()
+ * ──────────────
+ * Cel: Zwraca obiekt gracza z domyślnymi wartościami pozycji i fizyki.
+ * Kiedy wywoływana: resetGame(), nextLevel().
+ * Argumenty: brak
+ * Zwraca: {Object} – obiekt gracza {x, y, w, h, vx, vy, onGround, health, facing}
+ */
+function createPlayer() {
+  return {
+    x: 60, y: GROUND_Y - 44,
+    w: 32, h: 44,
+    vx: 0, vy: 0,
+    onGround: false,
+    health: 100,
+    facing: 1,   // 1 = prawo, -1 = lewo
+  };
+}
+
+/**
+ * createToken(x, y)
+ * ─────────────────
+ * Cel: Tworzy obiekt tokenu kodu (zebranki), losując typ spośród CODE_TIPS.
+ * Kiedy wywoływana: buildLevel().
+ * Argumenty:
+ *   x {number} – pozycja X tokenu
+ *   y {number} – pozycja Y tokenu
+ * Zwraca: {Object} – obiekt tokenu {x, y, w, h, symbol, color, tip, gold, bobOffset}
+ */
+function createToken(x, y) {
+  const tpl = CODE_TIPS[Math.floor(Math.random() * CODE_TIPS.length)];
+  return {
+    x, y, w: 28, h: 28,
+    symbol:    tpl.symbol,
+    color:     tpl.color,
+    tip:       tpl.tip,
+    gold:      false,
+    bobOffset: Math.random() * Math.PI * 2,   // przesunięcie fazy unoszenia
+  };
+}
+
+/**
+ * spawnBugs(count)
+ * ────────────────
+ * Cel: Dodaje do sceny określoną liczbę bugów, rozmieszczając je poza ekranem.
+ * Kiedy wywoływana: buildLevel(), a przy wyższych poziomach też cyklicznie.
+ * Argumenty:
+ *   count {number} – liczba bugów do wygenerowania
+ * Zwraca: void
+ * Współpracuje z: state.bugs, BUG_TYPES, state.level
+ */
+function spawnBugs(count) {
+  for (let i = 0; i < count; i++) {
+    const tpl   = BUG_TYPES[Math.floor(Math.random() * BUG_TYPES.length)];
+    const side  = Math.random() < 0.5 ? -1 : 1;   // z której strony wchodzi
+    const speed = tpl.speed * (1 + state.level * 0.12);
+    state.bugs.push({
+      x:     side === -1 ? -50 : canvas.width + 10,
+      y:     GROUND_Y - 36,
+      w:     36, h: 36,
+      vx:    side * speed,
+      name:  tpl.name,
+      color: tpl.color,
+      pts:   tpl.pts,
+      phase: Math.random() * Math.PI * 2,  // animacja chodzenia
+    });
+  }
+}
+
+/**
+ * spawnParticles(x, y, color, count)
+ * ────────────────────────────────────
+ * Cel: Tworzy efekt cząsteczkowy (wybuch pikseli) w podanym miejscu.
+ * Kiedy wywoływana: Po kolizjach, zebraniu tokenu, skoku, zabójstwie buga.
+ * Argumenty:
+ *   x     {number} – środek X efektu
+ *   y     {number} – środek Y efektu
+ *   color {string} – kolor cząsteczek (CSS)
+ *   count {number} – liczba cząsteczek
+ * Zwraca: void
+ * Współpracuje z: state.particles
+ */
+function spawnParticles(x, y, color, count) {
+  for (let i = 0; i < count; i++) {
+    const ang = Math.random() * Math.PI * 2;
+    const spd = Math.random() * 4 + 1;
+    state.particles.push({
+      x, y,
+      vx: Math.cos(ang) * spd,
+      vy: Math.sin(ang) * spd - 1,
+      r:  Math.random() * 4 + 2,
+      life: 30 + Math.random() * 20,
+      maxLife: 50,
+      color,
+    });
+  }
+}
+
+/**
+ * spawnFloatingText(x, y, text, color)
+ * ─────────────────────────────────────
+ * Cel: Tworzy unoszący się tekst punktowy (+10, COMBO x3 itp.).
+ * Kiedy wywoływana: Po zebraniu tokenu, zabiciu buga.
+ * Argumenty:
+ *   x     {number}
+ *   y     {number}
+ *   text  {string}
+ *   color {string}
+ * Zwraca: void
+ * Współpracuje z: state.floatingTexts
+ */
+function spawnFloatingText(x, y, text, color) {
+  state.floatingTexts.push({ x, y, text, color, life: 55, vy: -1.2 });
+}
+
+/* =============================================
+   5. MECHANIKA GRY
+   ============================================= */
+
+/**
+ * gameLoop(timestamp)
+ * ───────────────────
+ * Cel: Główna pętla gry – wywoływana przez przeglądarkę co klatkę (~60fps).
+ *      Jeśli gra jest aktywna (running && !paused), wywołuje update() i render().
+ * Kiedy wywoływana: requestAnimationFrame (automatycznie przez przeglądarkę).
+ * Argumenty:
+ *   timestamp {DOMHighResTimeStamp} – aktualny czas (nieużywany, dt jest stały)
+ * Zwraca: void
+ */
+function gameLoop(timestamp) {
+  if (state.running && !state.paused) {
+    update();
+    render();
+  } else if (!state.running) {
+    // Rysuj statyczne tło w menu
+    renderBackground();
+  }
+  requestAnimationFrame(gameLoop);
+}
+
+/**
+ * update()
+ * ────────
+ * Cel: Aktualizuje cały stan gry o jedną klatkę:
+ *      timery, ruch gracza, bugi, pociski, cząsteczki, sprawdza kolizje.
+ * Kiedy wywoływana: Co klatkę przez gameLoop(), gdy gra aktywna.
+ * Argumenty: brak
+ * Zwraca: void
+ */
+function update() {
+  updateTimers();
+  updatePlayer();
+  updateBugs();
+  updateBullets();
+  updateParticles();
+  updateFloatingTexts();
+  checkTokenCollisions();
+  checkBugCollisions();
+  checkBulletBugCollisions();
+  maybeSPawnMoreBugs();
+  updateHUD();
+}
+
+/**
+ * updateTimers()
+ * ──────────────
+ * Cel: Odlicza czas gry i zarządza timerem combo.
+ *      Gdy czas = 0 – koniec gry lub przejście poziomu.
+ * Kiedy wywoływana: Co klatkę przez update().
+ * Argumenty: brak
+ * Zwraca: void
+ */
+function updateTimers() {
+  state.timeAccum++;
+  if (state.timeAccum >= 60) {    // co ~60 klatek = 1 sekunda (przy 60fps)
+    state.timeAccum = 0;
+    state.timeLeft  = Math.max(0, state.timeLeft - 1);
+    if (state.timeLeft === 0) triggerTimeOut();
+  }
+
+  // Cooldown strzału
+  if (state.shootCooldown > 0) state.shootCooldown--;
+
+  // Nietykalność po trafieniu
+  if (state.invincible > 0) state.invincible--;
+
+  // Combo timer – resetuje combo po 4 sekundach braku zbieraków
+  if (state.comboTimer > 0) {
+    state.comboTimer--;
+    if (state.comboTimer === 0) state.combo = 1;
+  }
+}
+
+/**
+ * updatePlayer()
+ * ──────────────
+ * Cel: Obsługuje sterowanie gracza (klawisze), fizykę (grawitacja, platformy, ziemia)
+ *      oraz blokuje wyjście poza granice sceny.
+ * Kiedy wywoływana: Co klatkę przez update().
+ * Argumenty: brak
+ * Zwraca: void
+ * Współpracuje z: keys{}, MOVE_SPEED, GRAVITY, GROUND_Y, checkPlatformCollision()
+ */
+function updatePlayer() {
+  const p = state.player;
+
+  // --- 6. Sterowanie postacią – poziomy ruch ---
+  p.vx = 0;
+  if (keys["ArrowLeft"]  || keys["KeyA"]) { p.vx = -MOVE_SPEED; p.facing = -1; }
+  if (keys["ArrowRight"] || keys["KeyD"]) { p.vx =  MOVE_SPEED; p.facing =  1; }
+
+  // Grawitacja
+  p.vy += GRAVITY;
+
+  // Ruch
+  p.x += p.vx;
+  p.y += p.vy;
+
+  // Kolizja z ziemią
+  p.onGround = false;
+  if (p.y + p.h >= GROUND_Y) {
+    p.y       = GROUND_Y - p.h;
+    p.vy      = 0;
+    p.onGround = true;
+  }
+
+  // Kolizja z platformami
+  checkPlatformCollision(p);
+
+  // Granice boczne
+  p.x = Math.max(0, Math.min(canvas.width - p.w, p.x));
+}
+
+/**
+ * checkPlatformCollision(obj)
+ * ──────────────────────────
+ * Cel: Sprawdza, czy obiekt obj spada na platformę od góry i ląduje na niej.
+ *      Obsługuje wyłącznie kolizję z góry (przejście przez dół platformy jest ignorowane).
+ * Kiedy wywoływana: updatePlayer(), updateBugs().
+ * Argumenty:
+ *   obj {Object} – obiekt z właściwościami {x, y, w, h, vy, onGround}
+ * Zwraca: void
+ */
+function checkPlatformCollision(obj) {
+  state.platforms.forEach(pl => {
+    const overlapX = obj.x + obj.w > pl.x && obj.x < pl.x + pl.w;
+    const prevBottom = obj.y + obj.h - obj.vy;   // pozycja dolnej krawędzi w poprzedniej klatce
+    const currBottom = obj.y + obj.h;
+    if (overlapX && prevBottom <= pl.y && currBottom >= pl.y) {
+      obj.y       = pl.y - obj.h;
+      obj.vy      = 0;
+      if (obj === state.player) obj.onGround = true;
+    }
+  });
+}
+
+/**
+ * updateBugs()
+ * ────────────
+ * Cel: Przesuwa bugi poziomo, odbija od krawędzi sceny, animuje chodzenie.
+ * Kiedy wywoływana: Co klatkę przez update().
+ * Argumenty: brak
+ * Zwraca: void
+ */
+function updateBugs() {
+  state.bugs.forEach(bug => {
+    bug.x    += bug.vx;
+    bug.phase += 0.12;
+    // Odbicie od krawędzi
+    if (bug.x <= 0 || bug.x + bug.w >= canvas.width) {
+      bug.vx *= -1;
+    }
+  });
+}
+
+/**
+ * updateBullets()
+ * ───────────────
+ * Cel: Przesuwa pociski, zmniejsza ich żywotność i usuwa wygasłe.
+ * Kiedy wywoływana: Co klatkę przez update().
+ * Argumenty: brak
+ * Zwraca: void
+ */
+function updateBullets() {
+  state.bullets = state.bullets.filter(b => {
+    b.x   += b.vx;
+    b.y   += b.vy;
+    b.life--;
+    return b.life > 0 && b.x > -20 && b.x < canvas.width + 20
+                      && b.y > -20 && b.y < canvas.height + 20;
+  });
+}
+
+/**
+ * updateParticles()
+ * ─────────────────
+ * Cel: Animuje cząsteczki (ruch, zanikanie) i usuwa martwe.
+ * Kiedy wywoływana: Co klatkę przez update().
+ * Argumenty: brak
+ * Zwraca: void
+ */
+function updateParticles() {
+  state.particles = state.particles.filter(p => {
+    p.x    += p.vx;
+    p.y    += p.vy;
+    p.vy   += 0.12;
+    p.life--;
+    return p.life > 0;
+  });
+}
+
+/**
+ * updateFloatingTexts()
+ * ─────────────────────
+ * Cel: Unosi i zanika dymki punktowe, usuwa wygasłe.
+ * Kiedy wywoływana: Co klatkę przez update().
+ * Argumenty: brak
+ * Zwraca: void
+ */
+function updateFloatingTexts() {
+  state.floatingTexts = state.floatingTexts.filter(ft => {
+    ft.y   += ft.vy;
+    ft.life--;
+    return ft.life > 0;
+  });
+}
+
+/**
+ * maybeSPawnMoreBugs()
+ * ────────────────────
+ * Cel: Co jakiś czas dosypuje nowe bugi, by scena nie pustoszała.
+ *      Częstotliwość rośnie z poziomem.
+ * Kiedy wywoływana: Co klatkę przez update().
+ * Argumenty: brak
+ * Zwraca: void
+ */
+function maybeSPawnMoreBugs() {
+  if (state.bugs.length < 2 + state.level) {
+    if (Math.random() < 0.008 + state.level * 0.002) {
+      spawnBugs(1);
+    }
+  }
+}
+
+/* =============================================
+   8. KOLIZJE
+   ============================================= */
+
+/**
+ * rectsOverlap(a, b)
+ * ──────────────────
+ * Cel: Sprawdza nakładanie się dwóch prostokątów AABB (Axis-Aligned Bounding Box).
+ * Kiedy wywoływana: We wszystkich funkcjach sprawdzania kolizji.
+ * Argumenty:
+ *   a, b {Object} – obiekty z polami {x, y, w, h}
+ * Zwraca: {boolean} – true jeśli prostokąty się nakładają
+ */
+function rectsOverlap(a, b) {
+  return a.x < b.x + b.w &&
+         a.x + a.w > b.x &&
+         a.y < b.y + b.h &&
+         a.y + a.h > b.y;
+}
+
+/**
+ * checkTokenCollisions()
+ * ──────────────────────
+ * Cel: Sprawdza kolizje gracza z tokenami, zbiera je i przyznaje punkty.
+ * Kiedy wywoływana: Co klatkę przez update().
+ * Argumenty: brak
+ * Zwraca: void
+ * Współpracuje z: rectsOverlap(), spawnParticles(), spawnFloatingText(),
+ *                 handleTokenCollection(), showTip()
+ */
+function checkTokenCollisions() {
+  state.tokens = state.tokens.filter(tok => {
+    if (!rectsOverlap(state.player, tok)) return true;
+    // Zebranie!
+    const pts = tok.gold ? 50 * state.combo : 10 * state.combo;
+    addScore(pts);
+    state.combo      = Math.min(state.combo + 1, 8);
+    state.comboTimer = 240;
+    spawnParticles(tok.x + tok.w/2, tok.y + tok.h/2, tok.color, 14);
+    spawnFloatingText(tok.x, tok.y, `+${pts}`, tok.color);
+    if (tok.gold) spawnFloatingText(tok.x, tok.y - 20, `COMBO x${state.combo}`, "#ffe066");
+    showTip(tok.tip);
+    handleTokenCollection();
+    return false;  // usuń token
+  });
+}
+
+/**
+ * checkBugCollisions()
+ * ────────────────────
+ * Cel: Wykrywa kolizję gracza z bugiem.
+ *      Jeśli gracz spada na buga (vy > 0, stopa powyżej centrum buga)
+ *      – zabija buga i nadaje impuls odskoku.
+ *      W przeciwnym razie – gracz otrzymuje obrażenia.
+ * Kiedy wywoływana: Co klatkę przez update().
+ * Argumenty: brak
+ * Zwraca: void
+ * Współpracuje z: rectsOverlap(), killBug(), damagePlayer()
+ */
+function checkBugCollisions() {
+  const p = state.player;
+  state.bugs = state.bugs.filter(bug => {
+    if (!rectsOverlap(p, bug)) return true;
+    const stomping = p.vy > 0 && (p.y + p.h) < (bug.y + bug.h * 0.55);
+    if (stomping) {
+      killBug(bug);
+      p.vy = JUMP_FORCE * 0.65;  // odbicie po stompu
+      return false;
     } else {
-      const progress = Math.max(0, Math.min(1, (dt + c.duration) / c.duration));
-      drawCircle(c, progress, dt);
+      if (state.invincible === 0) damagePlayer(20);
+      return true;
     }
-  }
-
-  // Progress bar
-  const prog = Math.min(1, elapsed / gameState.songDuration);
-  document.getElementById('progress-bar').style.width = (prog * 100) + '%';
-
-  // End game
-  if (elapsed >= gameState.songDuration) {
-    gameState.active = false;
-    // Miss remaining
-    for (const c of gameState.circles) {
-      if (!c.hit && !c.missed) { c.missed = true; gameState.misses++; }
-    }
-    setTimeout(() => showResults(), 500);
-    return;
-  }
-
-  gameState.animFrame = requestAnimationFrame(gameLoop);
+  });
 }
 
-function drawBackground() {
-  // Subtle radial pulse
-  const t = (performance.now() % 2000) / 2000;
-  const grad = gCtx.createRadialGradient(GW/2, GH/2, 0, GW/2, GH/2, Math.max(GW,GH)*0.7);
-  grad.addColorStop(0, `rgba(168,85,247,${0.03 + 0.02*Math.sin(t*Math.PI*2)})`);
-  grad.addColorStop(1, 'rgba(0,0,0,0)');
-  gCtx.fillStyle = grad;
-  gCtx.fillRect(0, 0, GW, GH);
+/**
+ * checkBulletBugCollisions()
+ * ──────────────────────────
+ * Cel: Sprawdza trafienia pocisków debuggera w bugi.
+ * Kiedy wywoływana: Co klatkę przez update().
+ * Argumenty: brak
+ * Zwraca: void
+ * Współpracuje z: rectsOverlap(), killBug(), state.bullets
+ */
+function checkBulletBugCollisions() {
+  state.bullets = state.bullets.filter(bullet => {
+    const bulletRect = { x: bullet.x - bullet.r, y: bullet.y - bullet.r,
+                         w: bullet.r*2, h: bullet.r*2 };
+    let hit = false;
+    state.bugs = state.bugs.filter(bug => {
+      if (!hit && rectsOverlap(bulletRect, bug)) {
+        killBug(bug);
+        hit = true;
+        return false;
+      }
+      return true;
+    });
+    return !hit;
+  });
 }
 
-function drawCircle(c, progress, dt) {
-  const r = c.radius;
-  const alpha = dt < -100 ? Math.max(0, (dt + c.duration) / 300) : 1;
-
-  // Approach ring
-  const approachR = r + (1 - progress) * r * 2.5;
-  gCtx.beginPath();
-  gCtx.arc(c.x, c.y, approachR, 0, Math.PI * 2);
-  gCtx.strokeStyle = `rgba(255,255,255,${alpha * 0.6})`;
-  gCtx.lineWidth = 2;
-  gCtx.stroke();
-
-  // Circle fill
-  const grad = gCtx.createRadialGradient(c.x - r*0.3, c.y - r*0.3, 0, c.x, c.y, r);
-  grad.addColorStop(0, `rgba(255,150,230,${alpha})`);
-  grad.addColorStop(0.5, `rgba(168,85,247,${alpha})`);
-  grad.addColorStop(1, `rgba(34,211,238,${alpha * 0.8})`);
-  gCtx.beginPath();
-  gCtx.arc(c.x, c.y, r, 0, Math.PI * 2);
-  gCtx.fillStyle = grad;
-  gCtx.fill();
-
-  // White ring
-  gCtx.beginPath();
-  gCtx.arc(c.x, c.y, r, 0, Math.PI * 2);
-  gCtx.strokeStyle = `rgba(255,255,255,${alpha * 0.8})`;
-  gCtx.lineWidth = 2.5;
-  gCtx.stroke();
-
-  // Number
-  gCtx.font = `bold ${Math.round(r * 0.7)}px Rajdhani, sans-serif`;
-  gCtx.fillStyle = `rgba(255,255,255,${alpha})`;
-  gCtx.textAlign = 'center';
-  gCtx.textBaseline = 'middle';
-  gCtx.fillText(c.number % 9 + 1, c.x, c.y);
-
-  // Glow
-  gCtx.shadowColor = '#a855f7';
-  gCtx.shadowBlur = 15;
-  gCtx.beginPath();
-  gCtx.arc(c.x, c.y, r, 0, Math.PI * 2);
-  gCtx.strokeStyle = `rgba(168,85,247,${alpha * 0.5})`;
-  gCtx.lineWidth = 4;
-  gCtx.stroke();
-  gCtx.shadowBlur = 0;
+/**
+ * killBug(bug)
+ * ────────────
+ * Cel: Obsługuje śmierć buga: przyznaje punkty, tworzy efekty wizualne.
+ * Kiedy wywoływana: checkBugCollisions(), checkBulletBugCollisions().
+ * Argumenty:
+ *   bug {Object} – obiekt buga
+ * Zwraca: void
+ */
+function killBug(bug) {
+  const pts = bug.pts * state.combo;
+  addScore(pts);
+  spawnParticles(bug.x + bug.w/2, bug.y + bug.h/2, bug.color, 18);
+  spawnFloatingText(bug.x + 4, bug.y - 4, `+${pts} 💀`, bug.color);
 }
 
-function drawHitCircle(c, dt) {
-  const s = 1 + dt * 0.003;
-  const a = Math.max(0, 1 - dt / 400);
-  gCtx.globalAlpha = a;
-  gCtx.beginPath();
-  gCtx.arc(c.x, c.y, c.radius * s, 0, Math.PI * 2);
-  const color = c.hitResult === 300 ? '#4af7ff' : c.hitResult === 100 ? '#a0ff80' : '#ffdd55';
-  gCtx.strokeStyle = color;
-  gCtx.lineWidth = 3;
-  gCtx.stroke();
-  gCtx.globalAlpha = 1;
+/* =============================================
+   7. LOGIKA ROZGRYWKI
+   ============================================= */
+
+/**
+ * addScore(pts)
+ * ─────────────
+ * Cel: Dodaje punkty do wyniku i aktualizuje wyświetlacz.
+ * Kiedy wywoływana: Po zebraniu tokenu i zabiciu buga.
+ * Argumenty:
+ *   pts {number} – liczba punktów do dodania
+ * Zwraca: void
+ */
+function addScore(pts) {
+  state.score += pts;
 }
 
-// ============================================================
-// HIT DETECTION
-// ============================================================
-function handleHit(px, py) {
-  if (!gameState.active) return;
-  const now = performance.now();
-  const elapsed = now - gameState.startTime;
+/**
+ * damagePlayer(amount)
+ * ────────────────────
+ * Cel: Zmniejsza zdrowie gracza, uruchamia nietykalność, sprawdza śmierć.
+ * Kiedy wywoływana: checkBugCollisions() gdy kolizja bez stompu.
+ * Argumenty:
+ *   amount {number} – ilość obrażeń
+ * Zwraca: void
+ * Współpracuje z: state.player.health, state.invincible, loseLife()
+ */
+function damagePlayer(amount) {
+  state.player.health = Math.max(0, state.player.health - amount);
+  state.invincible     = 90;  // ~1,5 s nietykalności
+  state.combo          = 1;
+  state.comboTimer     = 0;
+  spawnParticles(state.player.x + state.player.w/2,
+                 state.player.y + state.player.h/2, "#ff3a5c", 12);
+  if (state.player.health <= 0) loseLife();
+}
 
-  // Find nearest unhit circle within time window
-  let best = null, bestDt = Infinity;
-
-  for (const c of gameState.circles) {
-    if (c.hit || c.missed) continue;
-    const dt = Math.abs(elapsed - c.time);
-    if (dt > 450) continue;
-    const dist = Math.hypot(px - c.x, py - c.y);
-    if (dist > c.radius * 1.4) continue;
-    if (dt < bestDt) { bestDt = dt; best = c; }
-  }
-
-  if (!best) return;
-
-  best.hit = true;
-  best.hitTime = elapsed;
-
-  let result, pts, color;
-  if (bestDt < 80) {
-    result = 300; pts = 300; color = '#4af7ff';
-    gameState.hits300++;
-  } else if (bestDt < 200) {
-    result = 100; pts = 100; color = '#a0ff80';
-    gameState.hits100++;
+/**
+ * loseLife()
+ * ──────────
+ * Cel: Odejmuje życie. Przy 0 życiach – koniec gry; inaczej resetuje gracza.
+ * Kiedy wywoływana: damagePlayer() gdy zdrowie = 0.
+ * Argumenty: brak
+ * Zwraca: void
+ * Współpracuje z: state.lives, triggerGameOver(), createPlayer()
+ */
+function loseLife() {
+  state.lives--;
+  if (state.lives <= 0) {
+    triggerGameOver();
   } else {
-    result = 50; pts = 50; color = '#ffdd55';
-    gameState.hits50++;
+    state.player        = createPlayer();
+    state.player.health = 100;
+    state.invincible    = 120;
   }
-
-  best.hitResult = result;
-  gameState.combo++;
-  if (gameState.combo > gameState.maxCombo) gameState.maxCombo = gameState.combo;
-  gameState.score += pts * Math.max(1, Math.floor(gameState.combo / 10) + 1);
-
-  updateHUD();
-  spawnHitFeedback(best.x, best.y - best.radius, result, color);
-  animateCombo();
 }
 
-function animateCombo() {
-  const el = document.getElementById('hud-combo');
-  el.classList.remove('pop');
-  void el.offsetWidth;
-  el.classList.add('pop');
+/**
+ * handleTokenCollection()
+ * ────────────────────────
+ * Cel: Sprawdza, czy zebrano wymaganą liczbę tokenów; jeśli tak – zmiana poziomu.
+ * Kiedy wywoływana: checkTokenCollisions() po każdym zebranym tokenie.
+ * Argumenty: brak
+ * Zwraca: void
+ * Współpracuje z: state.tokensCollected, state.tokensNeeded, showLevelUpScreen()
+ */
+function handleTokenCollection() {
+  state.tokensCollected++;
+  if (state.tokensCollected >= state.tokensNeeded) {
+    state.running = false;
+    showLevelUpScreen();
+  }
 }
 
+/**
+ * triggerTimeOut()
+ * ────────────────
+ * Cel: Wywoływana gdy czas dobiegnie końca. Kończy grę lub odbiera życie.
+ * Kiedy wywoływana: updateTimers() gdy timeLeft === 0.
+ * Argumenty: brak
+ * Zwraca: void
+ */
+function triggerTimeOut() {
+  damagePlayer(state.player.health);  // zabij gracza z braku czasu
+}
+
+/**
+ * triggerGameOver()
+ * ─────────────────
+ * Cel: Zatrzymuje grę i wyświetla ekran końca z wynikiem i oceną.
+ * Kiedy wywoływana: loseLife() gdy lives = 0.
+ * Argumenty: brak
+ * Zwraca: void
+ * Współpracuje z: showScreen(), state.score
+ */
+function triggerGameOver() {
+  state.running = false;
+  document.getElementById("final-score").textContent = state.score;
+  let msg = "";
+  if      (state.score >= 800) msg = "Jesteś mistrzem debugowania! 🏆 Kod bez bugów to Twój żywioł.";
+  else if (state.score >= 400) msg = "Całkiem nieźle! 🎯 Jeszcze trochę praktyki i staniesz się pro-devem.";
+  else                          msg = "Dobry start! 💡 Każdy senior zaczynał od zera. Spróbuj ponownie!";
+  document.getElementById("final-msg").textContent = msg;
+  showScreen("screen-gameover");
+}
+
+/* =============================================
+   EKRANY (UI helpers)
+   ============================================= */
+
+/** Ukrywa wszystkie overlay-e */
+function hideAllScreens() {
+  document.querySelectorAll(".overlay").forEach(el => el.classList.add("hidden"));
+}
+
+/** Pokazuje konkretny overlay */
+function showScreen(id) {
+  hideAllScreens();
+  document.getElementById(id).classList.remove("hidden");
+}
+
+/**
+ * showLevelUpScreen()
+ * ───────────────────
+ * Cel: Wyświetla ekran przejścia poziomu z losową wskazówką programistyczną.
+ * Kiedy wywoływana: handleTokenCollection() gdy tokensCollected >= tokensNeeded.
+ * Argumenty: brak
+ * Zwraca: void
+ */
+function showLevelUpScreen() {
+  const tip = CODE_TIPS[Math.floor(Math.random() * CODE_TIPS.length)];
+  document.getElementById("levelup-title").textContent = `POZIOM ${state.level + 1}`;
+  document.getElementById("levelup-tip").textContent   =
+    `💡 Wskazówka: ${tip.tip}`;
+  showScreen("screen-levelup");
+}
+
+/**
+ * showTip(text)
+ * ─────────────
+ * Cel: Wyświetla dymek z wskazówką programistyczną na 3 sekundy.
+ * Kiedy wywoływana: checkTokenCollisions().
+ * Argumenty:
+ *   text {string} – treść wskazówki
+ * Zwraca: void
+ */
+function showTip(text) {
+  const box = document.getElementById("tip-box");
+  box.textContent = `💡 ${text}`;
+  box.classList.add("visible");
+  clearTimeout(box._timer);
+  box._timer = setTimeout(() => box.classList.remove("visible"), 3200);
+}
+
+/**
+ * updateHUD()
+ * ───────────
+ * Cel: Synchronizuje elementy UI (punkty, poziom, życia, combo, czas, pasek zdrowia)
+ *      z aktualnym stanem gry.
+ * Kiedy wywoływana: Co klatkę przez update().
+ * Argumenty: brak
+ * Zwraca: void
+ */
 function updateHUD() {
-  document.getElementById('hud-score').textContent = String(gameState.score).padStart(6, '0');
-  document.getElementById('hud-combo').textContent = gameState.combo;
+  document.getElementById("score-display").textContent = state.score;
+  document.getElementById("level-display").textContent = state.level;
+  document.getElementById("combo-display").textContent = `x${state.combo}`;
+  document.getElementById("timer-display").textContent = state.timeLeft;
+  document.getElementById("lives-display").textContent =
+    "♥ ".repeat(state.lives).trim() || "✗";
 
-  const total = gameState.hits300 + gameState.hits100 + gameState.hits50 + gameState.misses;
-  const acc = total === 0 ? 100 :
-    ((gameState.hits300 * 300 + gameState.hits100 * 100 + gameState.hits50 * 50) /
-    (total * 300)) * 100;
-  document.getElementById('hud-acc').textContent = acc.toFixed(2) + '%';
+  const fill = document.getElementById("health-fill");
+  fill.style.width      = `${state.player ? state.player.health : 100}%`;
+  fill.style.background = state.player && state.player.health < 30 ? "#ff3a5c"
+                        : state.player && state.player.health < 60 ? "#ffe066"
+                        : "#00ff9d";
 }
 
-function spawnHitFeedback(x, y, text, color) {
-  const el = document.createElement('div');
-  el.className = 'hit-feedback';
-  el.textContent = text;
-  el.style.color = color;
-  el.style.left = (x - 30) + 'px';
-  el.style.top = (y - 10) + 'px';
-  document.getElementById('screen-game').appendChild(el);
-  setTimeout(() => el.remove(), 800);
+/* =============================================
+   RENDERING
+   ============================================= */
+
+/**
+ * render()
+ * ────────
+ * Cel: Rysuje cały aktualny stan gry na canvasie: tło, platformy, tokeny,
+ *      bugi, pociski, gracza, efekty, UI canvas.
+ * Kiedy wywoływana: Co klatkę przez gameLoop() gdy gra aktywna.
+ * Argumenty: brak
+ * Zwraca: void
+ */
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  renderBackground();
+  renderPlatforms();
+  renderGround();
+  renderTokens();
+  renderBugs();
+  renderBullets();
+  renderPlayer();
+  renderParticles();
+  renderFloatingTexts();
+  renderProgressBar();
 }
 
-// ============================================================
-// INPUT (Mouse + Touch)
-// ============================================================
-gameCanvas.addEventListener('mousedown', e => {
-  const rect = gameCanvas.getBoundingClientRect();
-  handleHit(e.clientX - rect.left, e.clientY - rect.top);
-  e.preventDefault();
-}, { passive: false });
+/** Rysuje tło – gradient + gwiazdy */
+function renderBackground() {
+  // Gradient nieba
+  const grad = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+  grad.addColorStop(0,   "#050810");
+  grad.addColorStop(1,   "#0a1828");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, GROUND_Y);
 
-gameCanvas.addEventListener('touchstart', e => {
-  const rect = gameCanvas.getBoundingClientRect();
-  for (const t of e.changedTouches) {
-    handleHit(t.clientX - rect.left, t.clientY - rect.top);
+  // Siatka w tle (klimat terminala)
+  ctx.strokeStyle = "rgba(0,90,180,0.07)";
+  ctx.lineWidth   = 1;
+  for (let x = 0; x < canvas.width; x += 50) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, GROUND_Y); ctx.stroke();
   }
-  e.preventDefault();
-}, { passive: false });
+  for (let y = 0; y < GROUND_Y; y += 50) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+  }
 
-// ============================================================
-// RESULTS
-// ============================================================
-function showResults() {
-  const gs = gameState;
-  const total = gs.hits300 + gs.hits100 + gs.hits50 + gs.misses;
-  const acc = total === 0 ? 100 :
-    ((gs.hits300 * 300 + gs.hits100 * 100 + gs.hits50 * 50) / (total * 300)) * 100;
-
-  let grade, gradeColor;
-  if (acc >= 99) { grade = 'SS'; gradeColor = '#4af7ff'; }
-  else if (acc >= 95) { grade = 'S'; gradeColor = '#ffdd55'; }
-  else if (acc >= 90) { grade = 'A'; gradeColor = '#a0ff80'; }
-  else if (acc >= 80) { grade = 'B'; gradeColor = '#22d3ee'; }
-  else if (acc >= 70) { grade = 'C'; gradeColor = '#a855f7'; }
-  else { grade = 'D'; gradeColor = '#ff4444'; }
-
-  document.getElementById('result-grade').textContent = grade;
-  document.getElementById('result-grade').style.color = gradeColor;
-  document.getElementById('result-title').textContent = currentSong ? currentSong.title.toUpperCase() : 'WYNIKI';
-  document.getElementById('res-score').textContent = gs.score.toLocaleString();
-  document.getElementById('res-acc').textContent = acc.toFixed(2) + '%';
-  document.getElementById('res-300').textContent = gs.hits300;
-  document.getElementById('res-100').textContent = gs.hits100;
-  document.getElementById('res-50').textContent = gs.hits50;
-  document.getElementById('res-miss').textContent = gs.misses;
-  document.getElementById('res-combo').textContent = gs.maxCombo + 'x';
-
-  showScreen('result');
+  // Gwiazdy
+  if (state.bgStars) {
+    state.bgStars.forEach(s => {
+      ctx.globalAlpha = s.a;
+      ctx.fillStyle   = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+  }
 }
 
-document.getElementById('btn-retry').addEventListener('click', () => {
-  if (currentSong) {
-    showScreen('game');
-    startCountdown(currentSong);
+/** Rysuje ziemię z efektem scanline */
+function renderGround() {
+  const g = ctx.createLinearGradient(0, GROUND_Y, 0, canvas.height);
+  g.addColorStop(0, "#0f2244");
+  g.addColorStop(1, "#06111f");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, GROUND_Y, canvas.width, canvas.height - GROUND_Y);
+
+  // Linię graniczną
+  ctx.strokeStyle = "#1e5a8a";
+  ctx.lineWidth   = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, GROUND_Y);
+  ctx.lineTo(canvas.width, GROUND_Y);
+  ctx.stroke();
+
+  // Piksele dekoracyjne
+  ctx.fillStyle = "#1e3a60";
+  for (let x = 0; x < canvas.width; x += 6) {
+    ctx.fillRect(x, GROUND_Y + 2, 3, 1 + Math.floor(x/80) % 3);
   }
-});
+}
 
-document.getElementById('btn-songs').addEventListener('click', () => {
-  showScreen('songs');
-  renderSongs(downloadedSongs);
-});
+/** Rysuje platformy z neonowym obramowaniem */
+function renderPlatforms() {
+  state.platforms.forEach(pl => {
+    ctx.fillStyle = "#0d2240";
+    ctx.fillRect(pl.x, pl.y, pl.w, pl.h);
+    ctx.strokeStyle = "#2060a0";
+    ctx.lineWidth   = 1.5;
+    ctx.strokeRect(pl.x, pl.y, pl.w, pl.h);
+    // Neonowa górna krawędź
+    ctx.strokeStyle = "#00e5ff";
+    ctx.lineWidth   = 1;
+    ctx.beginPath();
+    ctx.moveTo(pl.x, pl.y + 1);
+    ctx.lineTo(pl.x + pl.w, pl.y + 1);
+    ctx.stroke();
+  });
+}
 
-// ============================================================
-// KEYBOARD SUPPORT (Z, X for desktop)
-// ============================================================
-document.addEventListener('keydown', e => {
-  if (!gameState.active) return;
-  if (e.key === 'z' || e.key === 'Z' || e.key === 'x' || e.key === 'X') {
-    // Last approach-ring position
-    const now = performance.now();
-    const elapsed = now - gameState.startTime;
-    let best = null, bestDt = Infinity;
-    for (const c of gameState.circles) {
-      if (c.hit || c.missed) continue;
-      const dt = Math.abs(elapsed - c.time);
-      if (dt < 450 && dt < bestDt) { bestDt = dt; best = c; }
+/** Rysuje tokeny z efektem unoszenia i podświetleniem */
+function renderTokens() {
+  const t = Date.now() / 1000;
+  state.tokens.forEach(tok => {
+    const bobY = Math.sin(t * 2 + tok.bobOffset) * 4;
+
+    // Blask
+    const glow = ctx.createRadialGradient(
+      tok.x + tok.w/2, tok.y + tok.h/2 + bobY, 2,
+      tok.x + tok.w/2, tok.y + tok.h/2 + bobY, 22
+    );
+    glow.addColorStop(0, tok.color + "55");
+    glow.addColorStop(1, "transparent");
+    ctx.fillStyle = glow;
+    ctx.fillRect(tok.x - 12, tok.y + bobY - 12, tok.w + 24, tok.h + 24);
+
+    // Kafelek
+    ctx.fillStyle   = "rgba(0,0,0,0.55)";
+    ctx.strokeStyle = tok.color;
+    ctx.lineWidth   = 2;
+    roundRect(ctx, tok.x, tok.y + bobY, tok.w, tok.h, 5);
+    ctx.fill(); ctx.stroke();
+
+    // Symbol
+    ctx.fillStyle   = tok.color;
+    ctx.font        = "bold 11px 'Share Tech Mono', monospace";
+    ctx.textAlign   = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(tok.symbol, tok.x + tok.w/2, tok.y + tok.h/2 + bobY);
+  });
+}
+
+/** Rysuje bugi z animacją chodzenia */
+function renderBugs() {
+  state.bugs.forEach(bug => {
+    const dir = bug.vx >= 0 ? 1 : -1;
+    const leg = Math.sin(bug.phase) * 4;
+
+    ctx.save();
+    ctx.translate(bug.x + bug.w/2, bug.y + bug.h/2);
+    if (dir === -1) ctx.scale(-1, 1);
+
+    // Ciało
+    ctx.fillStyle   = bug.color;
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth   = 1;
+    roundRect(ctx, -bug.w/2, -bug.h/2, bug.w, bug.h, 8);
+    ctx.fill(); ctx.stroke();
+
+    // Oczy
+    ctx.fillStyle = "#fff";
+    ctx.beginPath(); ctx.arc(6, -8, 4, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = "#000";
+    ctx.beginPath(); ctx.arc(7, -8, 2, 0, Math.PI*2); ctx.fill();
+
+    // Nóżki
+    ctx.strokeStyle = bug.color;
+    ctx.lineWidth   = 2;
+    for (let i = -1; i <= 1; i += 1) {
+      const lx = i * 7;
+      ctx.beginPath();
+      ctx.moveTo(lx - bug.w/2, 4);
+      ctx.lineTo(lx - bug.w/2 - 6, 10 + (i === 0 ? leg : -leg));
+      ctx.stroke();
     }
-    if (best) handleHit(best.x, best.y);
-  }
-});
 
-// Initial render
-resizeGameCanvas();
+    // Etykieta nazwa
+    ctx.fillStyle   = "#fff";
+    ctx.font        = "bold 8px 'Share Tech Mono', monospace";
+    ctx.textAlign   = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(bug.name, 0, 0);
+
+    ctx.restore();
+  });
+}
+
+/** Rysuje pociski debuggera */
+function renderBullets() {
+  state.bullets.forEach(b => {
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, b.life / 20);
+    ctx.fillStyle   = "#ffe066";
+    ctx.shadowColor = "#ffe066";
+    ctx.shadowBlur  = 10;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  });
+}
+
+/** Rysuje gracza (postać-programistę) */
+function renderPlayer() {
+  const p = state.player;
+  ctx.save();
+  ctx.translate(p.x + p.w/2, p.y + p.h/2);
+  if (p.facing === -1) ctx.scale(-1, 1);
+
+  // Efekt nietykalności – mruganie
+  if (state.invincible > 0 && Math.floor(state.invincible / 5) % 2 === 0) {
+    ctx.globalAlpha = 0.35;
+  }
+
+  // Ciało + kombinezon
+  ctx.fillStyle   = "#1a3a6a";
+  ctx.strokeStyle = "#00e5ff";
+  ctx.lineWidth   = 2;
+  roundRect(ctx, -p.w/2, -p.h/2 + 14, p.w, p.h - 14, 4);
+  ctx.fill(); ctx.stroke();
+
+  // Głowa
+  ctx.fillStyle   = "#ffe0b2";
+  ctx.strokeStyle = "#00e5ff";
+  ctx.lineWidth   = 1.5;
+  ctx.beginPath();
+  ctx.arc(0, -p.h/2 + 10, 12, 0, Math.PI*2);
+  ctx.fill(); ctx.stroke();
+
+  // Oczy / ekran laptopa w rękach
+  ctx.fillStyle = "#003366";
+  ctx.fillRect(-4, -p.h/2 + 7, 3, 3);
+  ctx.fillRect( 2, -p.h/2 + 7, 3, 3);
+
+  // Napis na koszulce
+  ctx.fillStyle   = "#00e5ff";
+  ctx.font        = "bold 7px 'Share Tech Mono', monospace";
+  ctx.textAlign   = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("{ }", 0, 4);
+
+  ctx.restore();
+}
+
+/** Rysuje cząsteczki */
+function renderParticles() {
+  state.particles.forEach(p => {
+    ctx.globalAlpha = p.life / p.maxLife;
+    ctx.fillStyle   = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r * (p.life / p.maxLife), 0, Math.PI*2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+}
+
+/** Rysuje unoszące się teksty punktowe */
+function renderFloatingTexts() {
+  state.floatingTexts.forEach(ft => {
+    ctx.globalAlpha  = ft.life / 55;
+    ctx.fillStyle    = ft.color;
+    ctx.font         = "bold 14px 'Share Tech Mono', monospace";
+    ctx.textAlign    = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(ft.text, ft.x, ft.y);
+  });
+  ctx.globalAlpha = 1;
+}
+
+/** Pasek postępu zebranych tokenów */
+function renderProgressBar() {
+  const total  = state.tokensNeeded;
+  const done   = state.tokensCollected;
+  const barW   = 200;
+  const barH   = 8;
+  const bx     = canvas.width/2 - barW/2;
+  const by     = 12;
+
+  ctx.fillStyle   = "rgba(0,0,0,0.5)";
+  ctx.fillRect(bx, by, barW, barH);
+  const fill = (done / total) * barW;
+  const gr   = ctx.createLinearGradient(bx, 0, bx + barW, 0);
+  gr.addColorStop(0, "#00e5ff");
+  gr.addColorStop(1, "#00ff9d");
+  ctx.fillStyle = gr;
+  ctx.fillRect(bx, by, fill, barH);
+  ctx.strokeStyle = "#1e5a8a";
+  ctx.lineWidth   = 1;
+  ctx.strokeRect(bx, by, barW, barH);
+
+  ctx.fillStyle    = "#cce8ff";
+  ctx.font         = "10px 'Share Tech Mono', monospace";
+  ctx.textAlign    = "center";
+  ctx.textBaseline = "top";
+  ctx.fillText(`TOKENY: ${done} / ${total}`, canvas.width/2, by + 12);
+}
+
+/* =============================================
+   HELPER – zaokrąglony prostokąt
+   ============================================= */
+
+/**
+ * roundRect(ctx, x, y, w, h, r)
+ * ───────────────────────────────
+ * Cel: Rysuje ścieżkę zaokrąglonego prostokąta na danym kontekście.
+ *      Nie wywołuje fill()/stroke() – robi to wywołujący kod.
+ * Kiedy wywoływana: renderPlatforms(), renderTokens(), renderBugs(), renderPlayer().
+ * Argumenty:
+ *   ctx            – kontekst 2D canvas
+ *   x, y, w, h     – pozycja i rozmiar
+ *   r              – promień narożnika
+ * Zwraca: void
+ */
+function roundRect(ctx, x, y, w, h, r) {
+  r = Math.min(r, w/2, h/2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+/* =============================================
+   START
+   ============================================= */
+document.addEventListener("DOMContentLoaded", init);
 </script>
+
+<!-- =============================================
+     DOKUMENTACJA FUNKCJI JAVASCRIPT
+     ============================================= -->
+<!--
+╔══════════════════════════════════════════════════════════════════════════════╗
+║           DOKUMENTACJA WSZYSTKICH FUNKCJI JAVASCRIPT                        ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ INICJALIZACJA                                                               │
+├──────────────────┬──────────────────────────────────────────────────────────┤
+│ init()           │ Punkt wejścia. Pobiera <canvas>, rejestruje eventy,      │
+│                  │ wywołuje resetGame(false) i uruchamia requestAnimFrame.   │
+├──────────────────┴──────────────────────────────────────────────────────────┤
+│ 2. OBSŁUGA ZDARZEŃ                                                          │
+├──────────────────┬──────────────────────────────────────────────────────────┤
+│ setupEvent       │ Rejestruje keydown/keyup/click na window i canvas.        │
+│ Listeners()      │ Podpina przyciski UI. Wywoływana raz przez init().        │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ tryJump()        │ Nadaje graczowi JUMP_FORCE gdy jest na ziemi/platformie.  │
+│                  │ Wywoływana na keydown klawiszy skoku.                     │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ handleShoot      │ Tworzy pocisk w kierunku (mx,my). Szanuje cooldown.       │
+│ (mx, my)         │ Wywoływana na kliknięcie canvas.                          │
+├──────────────────┴──────────────────────────────────────────────────────────┤
+│ ZARZĄDZANIE GRĄ                                                             │
+├──────────────────┬──────────────────────────────────────────────────────────┤
+│ resetGame        │ Zeruje cały state{} – wywoływana przy starcie/restarcie.  │
+│ (autoStart)      │ autoStart=true od razu uruchamia grę.                     │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ startGame()      │ Chowa ekran startowy, ustawia state.running=true.         │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ nextLevel()      │ Inkrementuje poziom, zwiększa trudność, przebudowuje      │
+│                  │ scenę przez buildLevel().                                 │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ togglePause()    │ Przełącza state.paused i odpowiedni ekran overlay.        │
+├──────────────────┴──────────────────────────────────────────────────────────┤
+│ 3. SCENA GRY                                                                │
+├──────────────────┬──────────────────────────────────────────────────────────┤
+│ buildLevel(lvl)  │ Generuje tablice platforms[], tokens[], bugs[] dla        │
+│                  │ danego poziomu. Każdy poziom = inny układ platform.       │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ generateStars    │ Tworzy tablicę losowych gwiazd dla tła. Wywoływana raz   │
+│ (count)          │ w resetGame(). Zwraca Array.                              │
+├──────────────────┴──────────────────────────────────────────────────────────┤
+│ 4. OBIEKTY GRY                                                              │
+├──────────────────┬──────────────────────────────────────────────────────────┤
+│ createPlayer()   │ Zwraca obiekt gracza z pozycją startową i fizyką.        │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ createToken(x,y) │ Tworzy token kodu – losuje tip z CODE_TIPS[]. Zwraca     │
+│                  │ obiekt tokenu.                                            │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ spawnBugs(count) │ Dodaje count bugów do state.bugs[]. Losuje typ z         │
+│                  │ BUG_TYPES[], skaluje prędkość wg poziomu.                │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ spawnParticles   │ Tworzy eksplozję cząsteczek w punkcie (x,y).             │
+│ (x,y,color,n)   │                                                            │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ spawnFloating    │ Tworzy unoszący się tekst punktowy (+10, COMBO itp.)      │
+│ Text(x,y,txt,c) │                                                            │
+├──────────────────┴──────────────────────────────────────────────────────────┤
+│ 5. MECHANIKA GRY                                                             │
+├──────────────────┬──────────────────────────────────────────────────────────┤
+│ gameLoop(ts)     │ Główna pętla requestAnimationFrame. Wywołuje update()     │
+│                  │ + render() co klatkę gdy stan aktywny.                   │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ update()         │ Orchestrator klatki – wywołuje wszystkie update*()        │
+│                  │ i check*() w odpowiedniej kolejności.                     │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ updateTimers()   │ Odlicza timeLeft, cooldown strzału, nietykalność, combo.  │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ updatePlayer()   │ Czyta keys{}, liczy fizykę (grawitacja, ruch), sprawdza  │
+│                  │ kolizje z ziemią i platformami. → 6. Sterowanie.         │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ checkPlatform    │ AABB: wykrywa lądowanie obiektu na platformie od góry.    │
+│ Collision(obj)   │ Działa dla gracza i bugów.                                │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ updateBugs()     │ Przesuwa bugi, odbija od krawędzi, animuje chodzenie.     │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ updateBullets()  │ Przesuwa pociski, usuwa wygasłe.                          │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ updateParticles()│ Animuje cząsteczki (vy += 0.12), usuwa martwe.            │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ updateFloating   │ Unosi teksty punktowe, usuwa wygasłe.                     │
+│ Texts()          │                                                            │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ maybeSPawnMore   │ Co klatkę z małym prawdopodobieństwem dosypuje bugi,      │
+│ Bugs()           │ by plansza nie pustoszała.                                │
+├──────────────────┴──────────────────────────────────────────────────────────┤
+│ 8. KOLIZJE                                                                  │
+├──────────────────┬──────────────────────────────────────────────────────────┤
+│ rectsOverlap     │ Zwraca bool – czy dwa prostokąty AABB się nakładają.      │
+│ (a, b)           │ Wywoływana we wszystkich check*Collision().               │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ checkToken       │ Gracz + token → zebranie, punkty, tip, partykuły.         │
+│ Collisions()     │ Filtruje state.tokens[].                                  │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ checkBug         │ Gracz + bug: stomp → killBug + odbicie; bokiem → damage.  │
+│ Collisions()     │                                                            │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ checkBulletBug   │ Pocisk + bug → killBug, usuwa oba.                        │
+│ Collisions()     │                                                            │
+├──────────────────┴──────────────────────────────────────────────────────────┤
+│ 7. LOGIKA ROZGRYWKI                                                         │
+├──────────────────┬──────────────────────────────────────────────────────────┤
+│ addScore(pts)    │ Dodaje pts do state.score.                                │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ killBug(bug)     │ Przyznaje pts, tworzy efekty po śmierci buga.             │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ damagePlayer(n)  │ Odejmuje HP, włącza nietykalność, resetuje combo.         │
+│                  │ Przy HP=0 → loseLife().                                   │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ loseLife()       │ Odejmuje życie. Przy 0 → triggerGameOver().               │
+│                  │ Inaczej resetuje gracza.                                  │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ handleToken      │ Liczy zebrane tokeny. Gdy ≥ tokensNeeded → level up.      │
+│ Collection()     │                                                            │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ triggerTimeOut() │ Gdy czas = 0: zadaje graczowi max obrażeń.                │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ triggerGameOver()│ Zatrzymuje grę, ocenia wynik słownie, pokazuje overlay.   │
+├──────────────────┴──────────────────────────────────────────────────────────┤
+│ UI HELPERS                                                                  │
+├──────────────────┬──────────────────────────────────────────────────────────┤
+│ hideAllScreens() │ Dodaje klasę "hidden" do wszystkich overlay-ów.           │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ showScreen(id)   │ Chowa wszystkie, pokazuje overlay o danym id.             │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ showLevelUp      │ Wyświetla ekran przejścia poziomu z losową wskazówką.     │
+│ Screen()         │                                                            │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ showTip(text)    │ Pokazuje dymek z wskazówką na 3,2s. Używa setTimeout.     │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ updateHUD()      │ Synchronizuje WSZYSTKIE elementy DOM HUD z state{}.       │
+│                  │ Wywoływana co klatkę.                                     │
+├──────────────────┴──────────────────────────────────────────────────────────┤
+│ RENDERING                                                                   │
+├──────────────────┬──────────────────────────────────────────────────────────┤
+│ render()         │ Orchestrator renderowania: czyści canvas, wywołuje        │
+│                  │ wszystkie render*() w odpowiedniej kolejności (depth).    │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ renderBackground │ Gradient nieba + siatka + gwiazdy.                        │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ renderGround()   │ Gradient ziemi + linia + piksele dekoracyjne.             │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ renderPlatforms()│ Prostokąty platform z neonowym obramowaniem.              │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ renderTokens()   │ Animowane (bobbing) kafelki tokenów ze świeceniem.        │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ renderBugs()     │ Bugi z animacją nóg, oczami i etykietą nazwy.             │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ renderBullets()  │ Żółte kulki z rozmyciem świetlnym (glow).                 │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ renderPlayer()   │ Postać-programista z mruganiem przy nietykalności.         │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ renderParticles()│ Efekty cząsteczkowe (zanikające kółka).                   │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ renderFloating   │ Unoszące się teksty punktowe z fadeoutem.                 │
+│ Texts()          │                                                            │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ renderProgress   │ Pasek postępu tokenów nad sceną (canvas UI).              │
+│ Bar()            │                                                            │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ roundRect(...)   │ Helper: rysuje ścieżkę zaokrąglonego prostokąta.          │
+│                  │ Nie wykonuje fill/stroke – robi to wywołujący.            │
+└──────────────────┴──────────────────────────────────────────────────────────┘
+-->
 </body>
 </html>
-
